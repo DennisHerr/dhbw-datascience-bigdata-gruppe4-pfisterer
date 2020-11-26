@@ -118,6 +118,10 @@ const producer = kafka.producer()
 
 // Send tracking message to Kafka
 async function sendTrackingMessage(data) {
+
+	console.log(data);
+	console.log(JSON.stringify(data));
+
 	//Ensure the producer is connected
 	await producer.connect()
 
@@ -268,6 +272,8 @@ async function getMission(mission) {
 
 app.get("/missions/:mission", (req, res) => {
 	let mission = req.params["mission"]
+
+	console.log(mission)
 
 	// Send the tracking message to Kafka
 	sendTrackingMessage({
