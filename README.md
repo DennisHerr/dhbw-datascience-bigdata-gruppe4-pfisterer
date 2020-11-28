@@ -31,7 +31,7 @@
 
 ![Skizze](https://i.ibb.co/6mdw78w/Skizze.png)
 
-_hier ggf. Späteres Frontend einfügen_
+_hier ggf. Späteres Front End einfügen_
 
 # Anwendungsszenarien
 
