@@ -28,9 +28,17 @@ kafkaMessages = spark \
     .load()
 
 # Define schema of tracking data
-trackingMessageSchema = StructType() \
+""" trackingMessageSchema = StructType() \
     .add("mission", StringType()) \
-    .add("timestamp", IntegerType())
+    .add("timestamp", IntegerType()) """
+
+    trackingMessageSchema = StructType() \
+        .add("id_mach", IntegerType()) \
+        .add("id_failure", IntegerType())
+        .add("pos_x", IntegerType())
+        .add("pos_y", IntegerType())
+        .add("timestamp", IntegerType())
+
 
 # Example Part 3
 # Convert value: binary -> JSON -> fields + parsed timestamp
@@ -76,7 +84,7 @@ consoleDump = popular \
 # Example Part 6
 
 
-def saveToDatabase(batchDataframe, batchId):
+""" def saveToDatabase(batchDataframe, batchId):
     # Define function to save a dataframe to mysql
     def save_to_db(iterator):
         # Connect to database and use schema
@@ -89,6 +97,24 @@ def saveToDatabase(batchDataframe, batchId):
                               "(mission, count) VALUES (?, ?) "
                               "ON DUPLICATE KEY UPDATE count=?")
             sql.bind(row.mission, row.views, row.views).execute()
+
+        session.close()
+
+    # Perform batch UPSERTS per data partition
+    batchDataframe.foreachPartition(save_to_db) """
+
+    def saveToDatabase(batchDataframe, batchId):
+    # Define function to save a dataframe to mysql
+    def save_to_db(iterator):
+        # Connect to database and use schema
+        session = mysqlx.get_session(dbOptions)
+        session.sql("USE popular").execute()
+
+        for row in iterator:
+            # Run upsert (insert or update existing)
+            sql = session.sql("INSERT INTO failures "
+                              "(mach_id, failure_id, pos_x,pos_y, rating_date) VALUES (?, ?, ?, ?, ?) ")
+            sql.bind(row.id_mach, row.id_failure, row.pos_x, row.pos_y, row.timestamp).execute()
 
         session.close()
 
