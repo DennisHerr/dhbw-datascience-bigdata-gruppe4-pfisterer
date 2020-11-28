@@ -45,6 +45,8 @@ _hier ggf. Späteres Frontend einfügen_
 
 > Hier Text einfügen
 
+![Skizze](https://i.ibb.co/85QTn3Z/Architektur.png)
+
 # Entwurf
 
 > Hier Text einfügen
@@ -52,6 +54,10 @@ _hier ggf. Späteres Frontend einfügen_
 # Screencast
 
 > Video oder Link zum Video einfügen
+
+# Sonstiges
+
+> Befehle, wie man den Use-Case zum Laufen bekommt (siehe alte README)
 
 ---
 
