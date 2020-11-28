@@ -32,12 +32,12 @@ kafkaMessages = spark \
     .add("mission", StringType()) \
     .add("timestamp", IntegerType()) """
 
-    trackingMessageSchema = StructType() \
-        .add("id_mach", IntegerType()) \
-        .add("id_failure", IntegerType())
-        .add("pos_x", IntegerType())
-        .add("pos_y", IntegerType())
-        .add("timestamp", IntegerType())
+trackingMessageSchema = StructType() \
+    .add("id_mach", IntegerType()) \
+    .add("id_failure", IntegerType())  \
+    .add("pos_x", IntegerType()) \
+    .add("pos_y", IntegerType())  \
+    .add("timestamp", IntegerType())
 
 
 # Example Part 3
@@ -103,8 +103,8 @@ consoleDump = popular \
     # Perform batch UPSERTS per data partition
     batchDataframe.foreachPartition(save_to_db) """
 
-    def saveToDatabase(batchDataframe, batchId):
-    # Define function to save a dataframe to mysql
+def saveToDatabase(batchDataframe, batchId):
+# Define function to save a dataframe to mysql
     def save_to_db(iterator):
         # Connect to database and use schema
         session = mysqlx.get_session(dbOptions)
@@ -113,12 +113,12 @@ consoleDump = popular \
         for row in iterator:
             # Run upsert (insert or update existing)
             sql = session.sql("INSERT INTO failures "
-                              "(mach_id, failure_id, pos_x,pos_y, rating_date) VALUES (?, ?, ?, ?, ?) ")
+                                "(mach_id, failure_id, pos_x,pos_y, rating_date) VALUES (?, ?, ?, ?, ?) ")
             sql.bind(row.id_mach, row.id_failure, row.pos_x, row.pos_y, row.timestamp).execute()
 
-        session.close()
+            session.close()
 
-    # Perform batch UPSERTS per data partition
+# Perform batch UPSERTS per data partition
     batchDataframe.foreachPartition(save_to_db)
 
 # Example Part 7
