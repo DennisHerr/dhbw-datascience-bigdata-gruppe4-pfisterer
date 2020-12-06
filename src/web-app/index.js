@@ -218,6 +218,11 @@ async function getPopular(maxCount) {
 // Return HTML for start page
 app.get("/", (req, res) => {
 	const topX = 10;
+
+	//getMachineFromDatabaseOrCache(1)
+	//getFailuresFromDatabaseOrCache()
+	//getMachinesFromDatabaseOrCache()
+
 	Promise.all([getMissions(), getPopular(topX)]).then(values => {
 		const missions = values[0]
 		const popular = values[1]
