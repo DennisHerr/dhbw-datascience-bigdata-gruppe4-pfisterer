@@ -94,6 +94,15 @@ async function getFailuresFromDatabaseOrCache(){
 }
 
 //sends a tracking message to kafka to process the reported failure part
+/*
+   `Fault_Parts` (
+      `Id_Machine` BIGINT NOT NULL,
+      `Id_Failure` BIGINT NOT NULL,
+      `Pos_X` BIGINT NOT NULL,
+      `Pos_Y` BIGINT NOT NULL,
+      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> web server
+    );
+*/
 function reportFailurePart(failurePart){
 
 	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
@@ -104,7 +113,12 @@ function reportFailurePart(failurePart){
 }
 
 //returns failure parts statistic from database (no cache)
-function getFailurePartStatistic(){
+/*
+* shift: 1= Frühschicht, 2= Spätschicht, 3= Nachtschicht
+*
+* return [{failure_id:4, count:20}, ...]
+*/
+function getFailurePartStatistic(date, shift){
 
 }
 
