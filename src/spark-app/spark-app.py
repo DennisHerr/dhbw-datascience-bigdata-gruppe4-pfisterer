@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql.types import IntegerType, StringType, StructType, TimestampType
 import mysqlx
 
+
 dbOptions = {"host": "my-app-mysql-service", 'port': 33060, "user": "root", "password": "mysecretpw"}
 dbSchema = 'popular'
 windowDuration = '5 minutes'
@@ -37,17 +38,17 @@ trackingMessageSchema = StructType() \
 trackingMessages = kafkaMessages.select(
     # Extract 'value' from Kafka message (i.e., the tracking data)
     from_json(
-        column("value").cast("string"),
+        Column("value").cast("string"),
         trackingMessageSchema
     ).alias("json")
 ).select(
     # Convert Unix timestamp to TimestampType
-    from_unixtime(column('json.timestamp'))
+    from_unixtime(Column('json.timestamp'))
     .cast(TimestampType())
     .alias("parsed_timestamp"),
 
     # Select all JSON fields
-    column("json.*")
+    Column("json.*")
 ) \
     .withColumnRenamed('json.mission', 'mission') \
     .withWatermark("parsed_timestamp", windowDuration)
@@ -56,11 +57,11 @@ trackingMessages = kafkaMessages.select(
 # Compute most popular slides
 popular = trackingMessages.groupBy(
     window(
-        column("parsed_timestamp"),
+        Column("parsed_timestamp"),
         windowDuration,
         slidingDuration
     ),
-    column("mission")
+    Column("mission")
 ).count().withColumnRenamed('count', 'views')
 
 # Example Part 5
