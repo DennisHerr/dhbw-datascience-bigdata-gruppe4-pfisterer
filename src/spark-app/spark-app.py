@@ -1,14 +1,19 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import *
-from pyspark.sql.types import IntegerType, StringType, StructType, TimestampType
-import mysqlx
 from datetime import datetime
 
+import mysqlx
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+from pyspark.sql.types import (IntegerType, StringType, StructType,
+                               TimestampType)
 
-dbOptions = {"host": "my-app-mysql-service", 'port': 33060, "user": "root", "password": "mysecretpw"}
+dbOptions = {"host": "my-app-mysql-service", 'port': 33060,
+             "user": "root", "password": "mysecretpw"}
 dbSchema = 'popular'
 windowDuration = '5 minutes'
 slidingDuration = '1 minute'
+
+partsPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/parts"
+checkPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/checkpoint/"
 
 # Example Part 1
 # Create a spark session
@@ -18,7 +23,7 @@ spark = SparkSession.builder \
 # Set log level
 spark.sparkContext.setLogLevel('WARN')
 print('#######################################################################################')
-print('#############neuer lauf' , datetime.now())
+print('#############neuer lauf', datetime.now())
 
 # Example Part 2
 # Read messages from Kafka
@@ -38,7 +43,7 @@ trackingMessageSchema = StructType() \
     .add("timestamp", IntegerType()) """
 
 
-#sends a tracking message to kafka to process the reported failure part
+# sends a tracking message to kafka to process the reported failure part
 
 """    `Fault_Parts` (
       `Id_Machine` BIGINT NOT NULL,
@@ -58,7 +63,7 @@ ratingMessageSchema = StructType() \
 
 print('Struct angelegt')
 
-#OLD-------------------------------------------------------------------------------------
+# OLD-------------------------------------------------------------------------------------
 # Example Part 3
 # Convert value: binary -> JSON -> fields + parsed timestamp
 """ trackingMessages = kafkaMessages.select(
@@ -80,7 +85,7 @@ print('Struct angelegt')
     .withWatermark("parsed_timestamp", windowDuration).printSchema()
 print('nachrichten holen') """
 
-#-------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
 # Example Part 3
 # Convert value: binary -> JSON -> fields + parsed timestamp
 ratingMessages = kafkaMessages.select(
@@ -90,27 +95,25 @@ ratingMessages = kafkaMessages.select(
         ratingMessageSchema
     ).alias("json")
 )
-jasonmsg= ratingMessages.select(
-        # Convert Unix timestamp to TimestampType
-        from_unixtime(column('json.timestamp'))
-        .cast(TimestampType())
-        .alias("parsed_timestamp"),
+jasonmsg = ratingMessages.select(
+    # Convert Unix timestamp to TimestampType
+    from_unixtime(column('json.timestamp'))
+    .cast(TimestampType())
+    .alias("parsed_timestamp"),
 
-        # Select all JSON fields
-        column("json.*")
-    ) \
-        .withColumnRenamed('json.machine', 'machine') \
-        .withColumnRenamed('json.failure', 'failure') \
-        .withColumnRenamed('json.posx', 'posx') \
-        .withColumnRenamed('json.posy', 'posy') \
-        .withWatermark("parsed_timestamp", windowDuration)
-print('JSON konvertiert')
-ratingMessages.printSchema() 
+    # Select all JSON fields
+    column("json.*")
+) \
+    .withColumnRenamed('json.machine', 'machine') \
+    .withColumnRenamed('json.failure', 'failure') \
+    .withColumnRenamed('json.posx', 'posx') \
+    .withColumnRenamed('json.posy', 'posy') \
+    .withWatermark("parsed_timestamp", windowDuration)
+print('Schreibe in HDFS')
 
+#initDF = jasonmsg.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
 
-
-
-#--------OLD----------------------------------------------------------------
+# --------OLD----------------------------------------------------------------
 # Example Part 4
 # Compute most popular slides
 """ popular = trackingMessages.groupBy(
@@ -122,7 +125,7 @@ ratingMessages.printSchema()
     column("mission")
 ).count().withColumnRenamed('count', 'views') """
 
-#^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # Example Part 4
 # Compute most popular slides
@@ -134,7 +137,7 @@ failures = jasonmsg.groupBy(
     ),
     column("machine"),
     column("failure")
-   # column("failure")
+    # column("failure")
 ).count().withColumnRenamed('count', 'faulty')
 
 print('ist gruppiert')
@@ -162,6 +165,7 @@ consoleDump = failures \
 
 def saveToDatabase(batchDataframe, batchId):
     # Define function to save a dataframe to mysql
+
     def save_to_db(iterator):
         # Connect to database and use schema
         session = mysqlx.get_session(dbOptions)
@@ -173,7 +177,7 @@ def saveToDatabase(batchDataframe, batchId):
             sql = session.sql("INSERT INTO popular "
                               "(mission, count) VALUES (?, ?) "
                               "ON DUPLICATE KEY UPDATE count=?")
-            sql.bind('' ,1, 1).execute()
+            sql.bind('', 1, 1).execute()
 
         session.close()
 
@@ -181,6 +185,7 @@ def saveToDatabase(batchDataframe, batchId):
     batchDataframe.foreachPartition(save_to_db)
 
 # Example Part 7
+
 
 print('streame jetzt')
 
