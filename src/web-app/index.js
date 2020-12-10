@@ -1,4 +1,5 @@
 const os = require('os')
+//const application = require('./application')
 const dns = require('dns').promises
 const { program: optionparser } = require('commander')
 const { Kafka } = require('kafkajs')
