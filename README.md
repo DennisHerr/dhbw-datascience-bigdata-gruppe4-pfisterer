@@ -10,20 +10,20 @@
 > - Screencast der Demo
 > - etc.
 
-## Möglicher Aufbau der Doku / Readme
+## Inhaltsverzeichnis
 
-- [x] Idee der Anwendung
-- [x] Anwendungsszenarien
-- [ ] Architektur
-- [ ] Entwurf
-- [ ] Screencast
-- [ ] etc.
+1. [Idee der Anwendung](#idee)
+2. [Anwendungsszenarien](#anwendung)
+3. [Architektur](#architektur)
+4. [Anwendung starten](#start)
+5. [Screencast](#screencast)
+6. [Sonstiges](#sonstiges)
 
-# Idee der Anwendung
+## Idee der Anwendung <a name="idee"></a>
 
-- Maschine(n) von Hersteller XY produziert Teile T
-- Nach der Produktion wertet ein Arbeiter die Teile aus
-- Mitarbeiter hat einen Bildschirm mit einem Bild des Teiles, über welches ein Raster gelegt ist
+- Ein Industrieunternehmen produziert in der Massenfertigung auf vielen Maschinen das selbe Teil
+- Nach der Produktion wertet ein Arbeiter/eine Maschine die Teile aus
+- Mitarbeiter hat einen Bildschirm mit einem Bild des Teiles, über welches ein Raster (x/y-Koordinaten) gelegt ist
 - Mitarbeiter klickt defekte Stelle an
   - optional: Fehlergrund wird mitangegeben
 
@@ -31,9 +31,9 @@
 
 ![Skizze](https://i.ibb.co/6mdw78w/Skizze.png)
 
-_hier ggf. Späteres Front End einfügen_
+_hier ggf. image der Weboberfläche einfügen_
 
-# Anwendungsszenarien
+## Anwendungsszenarien <a name="anwendung"></a>
 
 - Häufige Fehler erkennen
 - Zusammenhänge von Fehler erkennen
@@ -41,40 +41,60 @@ _hier ggf. Späteres Front End einfügen_
   - Fehler geht von bestimmter Maschine aus
   - Fehler tritt in bestimmtem Werk auf
 
-# Architektur
+## Architektur <a name="architektur"></a>
 
-> Hier Text einfügen
+> einzelne Elemente noch genauer beschreiben
 
 ![Skizze](https://i.ibb.co/85QTn3Z/Architektur.png)
 
-# Entwurf
+#### Load Balancer (Ingress)
 
-> Hier Text einfügen
+-
+-
 
-# Screencast
+#### Web Server (Node.js)
 
-> Video oder Link zum Video einfügen
+-
+-
 
-# Sonstiges
+#### Cache Server (Memcached)
 
-> Befehle, wie man den Use-Case zum Laufen bekommt (siehe alte README)
+-
+-
 
----
+#### Database Server (MySQL-Datenbank)
 
----
+-
+-
 
-# altes README
+#### Big Data&Science Processing (Spark)
 
-### Use Case: Popular NASA Shuttle Missions
+-
+-
 
-```json
-{
-  "mission": "sts-10",
-  "timestamp": 1604325221
-}
+#### Big Data Messaging (Kafka)
+
+-
+-
+
+#### Data Lake (HHDFS)
+
+-
+-
+
+## Anwendung starten <a name="start"></a>
+
+Minikube start
+
+```
+minikube start --driver=docker
 ```
 
-### Prerequisites
+Enable Load Balancer (Ingress)
+
+```
+minikube addobs enable ingress
+```
 
 A running Strimzi.io Kafka operator
 
@@ -86,10 +106,24 @@ helm install my-kafka-operator strimzi/strimzi-kafka-operator
 A running Hadoop cluster with YARN (for checkpointing)
 
 ```bash
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo add stable https://charts.helm.sh/stable
 helm install --namespace=default --set hdfs.dataNode.replicas=2 --set yarn.nodeManager.replicas=2 --set hdfs.webhdfs.enabled=true my-hadoop-cluster stable/hadoop
 ```
 
-### Deploy
-
 To develop using [Skaffold](https://skaffold.dev/), use `skaffold dev`.
+
+Webanwendung aufrufen
+
+```
+kubectl get ingress
+```
+
+liefert die IP-Adresse
+
+## Screencast <a name="screencast"></a>
+
+> Video oder Link zum Video einfügen
+
+## Sonstiges <a name="sonstiges"></a>
+
+> text...
