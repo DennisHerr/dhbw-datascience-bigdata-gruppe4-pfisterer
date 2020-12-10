@@ -37,11 +37,6 @@ kafkaMessages = spark \
     .load()
 
 
-""" # Define schema of tracking data
-trackingMessageSchema = StructType() \
-    .add("mission", StringType()) \
-    .add("timestamp", IntegerType()) """
-
 
 # sends a tracking message to kafka to process the reported failure part
 
@@ -63,29 +58,7 @@ ratingMessageSchema = StructType() \
 
 print('Struct angelegt')
 
-# OLD-------------------------------------------------------------------------------------
-# Example Part 3
-# Convert value: binary -> JSON -> fields + parsed timestamp
-""" trackingMessages = kafkaMessages.select(
-    # Extract 'value' from Kafka message (i.e., the tracking data)
-    from_json(
-        column("value").cast("string"),
-        trackingMessageSchema
-    ).alias("json")
-).select(
-    # Convert Unix timestamp to TimestampType
-    from_unixtime(column('json.timestamp'))
-    .cast(TimestampType())
-    .alias("parsed_timestamp"),
 
-    # Select all JSON fields
-    column("json.*")
-) \
-    .withColumnRenamed('json.mission', 'mission') \
-    .withWatermark("parsed_timestamp", windowDuration).printSchema()
-print('nachrichten holen') """
-
-# -------------------------------------------------------------------------------------------------
 # Example Part 3
 # Convert value: binary -> JSON -> fields + parsed timestamp
 ratingMessages = kafkaMessages.select(
@@ -95,7 +68,7 @@ ratingMessages = kafkaMessages.select(
         ratingMessageSchema
     ).alias("json")
 )
-jasonmsg = ratingMessages.select(
+ratingMsgVal = ratingMessages.select(
     # Convert Unix timestamp to TimestampType
     from_unixtime(column('json.timestamp'))
     .cast(TimestampType())
@@ -113,23 +86,10 @@ print('Schreibe in HDFS')
 
 #initDF = jasonmsg.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
 
-# --------OLD----------------------------------------------------------------
-# Example Part 4
-# Compute most popular slides
-""" popular = trackingMessages.groupBy(
-    window(
-        column("parsed_timestamp"),
-        windowDuration,
-        slidingDuration
-    ),
-    column("mission")
-).count().withColumnRenamed('count', 'views') """
-
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 # Example Part 4
 # Compute most popular slides
-failures = jasonmsg.groupBy(
+ratingGrouped = ratingMsgVal.groupBy(
     window(
         column("parsed_timestamp"),
         windowDuration,
@@ -137,22 +97,15 @@ failures = jasonmsg.groupBy(
     ),
     column("machine"),
     column("failure")
-    # column("failure")
-).count().withColumnRenamed('count', 'faulty')
+).count().withColumnRenamed('count', 'cnt')
 
 print('ist gruppiert')
 
 # Example Part 5
 # Start running the query; print running counts to the console
-""" consoleDump = popular \
-    .writeStream \
-    .trigger(processingTime=slidingDuration) \
-    .outputMode("update") \
-    .format("console") \
-    .option("truncate", "false") \
-    .start() """
 
-consoleDump = failures \
+
+consoleDump = ratingGrouped \
     .writeStream \
     .trigger(processingTime=slidingDuration) \
     .outputMode("update") \
@@ -174,10 +127,11 @@ def saveToDatabase(batchDataframe, batchId):
         for row in iterator:
             print('REIHE', str(row))
             # Run upsert (insert or update existing)
-            sql = session.sql("INSERT INTO popular "
-                              "(mission, count) VALUES (?, ?) "
+            sql = session.sql("INSERT INTO faults "
+                              "(Id_Machine, Id_Failure, count) VALUES (?, ?,?) "
                               "ON DUPLICATE KEY UPDATE count=?")
-            sql.bind('', 1, 1).execute()
+            #print(row.machine, row.failure, row.count, row.count)
+            sql.bind(row.machine, row.failure, row.cnt, row.cnt).execute()
 
         session.close()
 
@@ -189,7 +143,7 @@ def saveToDatabase(batchDataframe, batchId):
 
 print('streame jetzt')
 
-dbInsertStream = failures.writeStream \
+dbInsertStream = ratingGrouped.writeStream \
     .trigger(processingTime=slidingDuration) \
     .outputMode("update") \
     .foreachBatch(saveToDatabase) \

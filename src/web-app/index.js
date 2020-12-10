@@ -299,7 +299,7 @@ async function getMission(mission) {
 
 json=JSON.stringify({
 		machine: 1,
-		failure: 2,
+		failure: 3,
 		posx: 5,
 		posy: 10,
 		timestamp: Math.floor(new Date() / 1000)})
@@ -312,7 +312,7 @@ app.get("/missions/:mission", (req, res) => {
 	// Send the tracking message to Kafka
 	sendTrackingMessage({
 		machine: 1,
-		failure: 2,
+		failure: parseInt(mission.split('-')[1]),
 		posx: 5,
 		posy: 10,
 		timestamp: Math.floor(new Date() / 1000)
