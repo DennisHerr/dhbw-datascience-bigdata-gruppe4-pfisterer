@@ -15,7 +15,7 @@
 1. [Idee der Anwendung](#idee)
 2. [Anwendungsszenarien](#anwendung)
 3. [Architektur](#architektur)
-4. [Anwendung starten](#start)
+4. [Starten der Anwendung](#start)
 5. [Screencast](#screencast)
 6. [Sonstiges](#sonstiges)
 
@@ -29,7 +29,7 @@
 
 ### Skizze
 
-![Skizze](https://i.ibb.co/6mdw78w/Skizze.png)
+![](docs/skizze.png)
 
 _hier ggf. image der Weboberfläche einfügen_
 
@@ -45,7 +45,7 @@ _hier ggf. image der Weboberfläche einfügen_
 
 > einzelne Elemente noch genauer beschreiben
 
-![Skizze](https://i.ibb.co/85QTn3Z/Architektur.png)
+![](docs/architektur.png)
 
 #### Load Balancer (Ingress)
 
@@ -82,7 +82,7 @@ _hier ggf. image der Weboberfläche einfügen_
 -
 -
 
-## Anwendung starten <a name="start"></a>
+## Starten der Anwendung <a name="start"></a>
 
 Minikube start
 
