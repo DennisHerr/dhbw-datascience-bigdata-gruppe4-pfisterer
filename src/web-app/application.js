@@ -1,7 +1,8 @@
+
 //#region public API
 
 //returns all machines from the database/cache in JSON format
-async function getMachinesFromDatabaseOrCache(){
+exports.getMaschines = async function getMachinesFromDatabaseOrCache(){
 	const key = 'machines'
 	let cachedData = await getFromCache(key)
 
@@ -32,7 +33,7 @@ async function getMachinesFromDatabaseOrCache(){
 }
 
 //returns a specific machine from the database/cache in JSON format
-async function getMachineFromDatabaseOrCache(id){
+exports.getMachine = async function getMachineFromDatabaseOrCache(id){
 	const key = "machine_" + id
 	let cachedData = await getFromCache(key)
 
@@ -63,7 +64,7 @@ async function getMachineFromDatabaseOrCache(id){
 }
 
 //returns all failures from the database/cache in JSON format
-async function getFailuresFromDatabaseOrCache(){
+exports.getFailures = async function getFailuresFromDatabaseOrCache(){
 	const key = 'failures'
 	let cachedData = await getFromCache(key)
 
@@ -103,7 +104,7 @@ async function getFailuresFromDatabaseOrCache(){
       `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> web server
     );
 */
-function reportFailurePart(failurePart){
+exports.reportFailurePart = function reportFailurePart(failurePart){
 
 	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
 
@@ -115,11 +116,26 @@ function reportFailurePart(failurePart){
 //returns failure parts statistic from database (no cache)
 /*
 * shift: 1= Frühschicht, 2= Spätschicht, 3= Nachtschicht
+* date format: 2020-12-10 -> yyyy-mm-dd
 *
-* return [{failure_id:4, count:20}, ...]
+* return [{id_failure:4, count:20, date:'2020-12-10', shift=1}, ...]
 */
-function getFailurePartStatistic(date, shift){
+function getFailurePartStatistic(shift, date){
+	console.log(`Reading failure part statistic data from database`)
 
+	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift == ? AND Date == '?'", [shift, date])
+	let data = result.fetchAll()
+
+	if(data) {
+		let jsonData = JSON.stringify(data.map(_shiftStatisticAsJson))
+
+		console.log(`Got failures part statistic data from database ${jsonData}`)
+
+		return jsonData
+	}
+	else {
+		return `No failure part statistic data found`
+	}
 }
 
 //#endregion
@@ -142,6 +158,16 @@ function _failureAsJson(data){
 		id: data[0],
 		name: data[1],
 		description: data[2]
+	}
+}
+
+//extracts sql result into json format
+function _shiftStatisticAsJson(data){
+	return {
+		id_failure: data[0],
+		count: data[1],
+		date: data[2],
+		shift: data[3]
 	}
 }
 
