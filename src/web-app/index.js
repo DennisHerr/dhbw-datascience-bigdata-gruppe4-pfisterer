@@ -119,7 +119,6 @@ const producer = kafka.producer()
 // Send tracking message to Kafka
 async function sendTrackingMessage(data) {
 
-	console.log(data);
 	console.log(JSON.stringify(data));
 
 	//Ensure the producer is connected
@@ -275,7 +274,7 @@ async function getMission(mission) {
 	}
 }
 
-app.get("/missions/:mission", (req, res) => {
+/* app.get("/missions/:mission", (req, res) => {
 	let mission = req.params["mission"]
 
 	console.log(mission)
@@ -296,7 +295,43 @@ app.get("/missions/:mission", (req, res) => {
 	}).catch(err => {
 		sendResponse(res, `<h1>Error</h1><p>${err}</p>`, false)
 	})
-});
+}); */
+
+json=JSON.stringify({
+		machine: 1,
+		failure: 2,
+		posx: 5,
+		posy: 10,
+		timestamp: Math.floor(new Date() / 1000)})
+
+app.get("/missions/:mission", (req, res) => {
+	let mission = req.params["mission"]
+
+	console.log(mission)
+
+	// Send the tracking message to Kafka
+	sendTrackingMessage({
+		machine: 1,
+		failure: 2,
+		posx: 5,
+		posy: 10,
+		timestamp: Math.floor(new Date() / 1000)
+	}
+	).then(() => console.log("Sent to kafka"))
+		.catch(e => console.log("Error sending to kafka", e))
+
+	// Send reply to browser
+	getMission(mission).then(data => {
+		sendResponse(res, `<h1>${data.mission}</h1><p>${data.heading}</p>` +
+			data.description.split("\n").map(p => `<p>${p}</p>`).join("\n"),
+			data.cached
+		)
+	}).catch(err => {
+		sendResponse(res, `<h1>Error</h1><p>${err}</p>`, false)
+	})
+}); 
+
+
 
 // -------------------------------------------------------
 // Main method
@@ -304,4 +339,5 @@ app.get("/missions/:mission", (req, res) => {
 
 app.listen(options.port, function () {
 	console.log("Node app is running at http://localhost:" + options.port)
+	console.log(JSON.stringify({ x: 5, y: 6 }));
 });
