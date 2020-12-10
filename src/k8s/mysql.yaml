@@ -43,11 +43,12 @@ data:
       PRIMARY KEY (`Id`)
     );
 
-      CREATE TABLE `faults` (
+    CREATE TABLE `faults` (
       `Id_Machine` BIGINT NOT NULL,
       `Id_Failure` BIGINT NOT NULL,
       `count` BIGINT NOT NULL,
       PRIMARY KEY (`Id_Machine`, `Id_Failure`)
+    );
     CREATE TABLE `Shift_Statistics` (
       `Id_Failure` BIGINT NOT NULL,
       `Count` BIGINT NOT NULL,
