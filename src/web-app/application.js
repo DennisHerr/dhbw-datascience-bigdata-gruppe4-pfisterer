@@ -101,14 +101,25 @@ exports.getFailures = async function getFailuresFromDatabaseOrCache(){
       `Id_Failure` BIGINT NOT NULL,
       `Pos_X` BIGINT NOT NULL,
       `Pos_Y` BIGINT NOT NULL,
-      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> web server
-    );
+      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> must be set on web server side
+	);
+	
+	the parameter failurePart is a JSON object with the elements Id_Machine, Id_Failure, Pos_X and Pos_Y
 */
 exports.reportFailurePart = function reportFailurePart(failurePart){
 
 	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
 
-	sendTrackingMessage(failurePart)
+	let currentTimestamp = new Date().toJSON().slice(0, 19).replace('T', ' ')
+	let jsonData = {
+		Id_Machine: failurePart.Id_Machine,
+		Id_Failure: failurePart.Id_Failure,
+		Pos_X: failurePart.Pos_X,
+		Pos_Y: failurePart.Pos_Y,
+		Rated_at: currentTimestamp
+	}
+
+	sendTrackingMessage(jsonData)
 		.then(()=> console.log("Send message to kafka"))
 		.catch(e => console.log("Failed to send message to kafka due to the error", e))
 }
