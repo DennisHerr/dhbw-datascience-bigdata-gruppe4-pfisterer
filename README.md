@@ -64,7 +64,7 @@ _hier ggf. image der Weboberfläche einfügen_
 
 #### Database Server (MySQL-Datenbank)
 
--
+![](docs/db_schema1.png)
 -
 
 #### Big Data&Science Processing (Spark)
