@@ -63,9 +63,18 @@ _hier ggf. image der Weboberfläche einfügen_
 -
 
 #### Database Server (MySQL-Datenbank)
+Die Datenbank besteht insgesamt aus vier Tabellen. Die einzelnen Felder der Tabllen können der nachfolgenden Abbildung entnommen werden.
 
 ![](docs/db_schema1.PNG)
--
+
+* Maschines
+⋅⋅⋅ Enthält die Daten aller Maschinen des Herstellers für die Fehler erhoben werden können, wie zum Beispiel den Namen der Maschine ⋅⋅
+* Failures
+⋅⋅⋅ Enthält die Daten aller Fehler, die potentiell auftreten können ⋅⋅
+* Fault_Parts
+⋅⋅⋅ Enthält die Daten aller festgestellten Fehler, wie zum Beispiel das Erfassungsdatum oder die Id der Maschine, an welcher der Fehler festgestellt wurde ⋅⋅
+* Shift_Statistics
+⋅⋅⋅ Enthält aufbereitete Daten, die darstellen, welche Fehler wie oft in welcher Schicht aufgetreten sind ⋅⋅
 
 #### Big Data&Science Processing (Spark)
 
