@@ -53,9 +53,7 @@ _hier ggf. image der Weboberfläche einfügen_
 -
 
 #### Web Server (Node.js)
-
--
--
+Der Web Server ist mit Node.js in JavaScript entwickelt. Er verarbeitet alle Anfragen der Clients und beantwortet diese. Beispielsweise wird entsprechender HTML Code an den Cient übermittelt, um die Website darzustellen.
 
 #### Cache Server (Memcached)
 
