@@ -13,6 +13,10 @@ RUN npm install --no-optional && npm cache clean --force
 # Install app
 COPY *.js /app/
 
+COPY /materialize/ /app/materialize/
+
+COPY /views/ /app/views/
+
 # Export app port and set entrypoint at startup
 EXPOSE 3000
 ENTRYPOINT ["node", "index.js"]

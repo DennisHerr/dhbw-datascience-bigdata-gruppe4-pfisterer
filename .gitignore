@@ -1,1 +1,3 @@
 .vscode/settings.json
+/src/node_modules/*
+/src/web-app/node_modules/*

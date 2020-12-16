@@ -1,3 +1,4 @@
+
 //#region public API
 
 //returns all machines from the database/cache in JSON format
@@ -100,14 +101,25 @@ async function getFailuresFromDatabaseOrCache(){
       `Id_Failure` BIGINT NOT NULL,
       `Pos_X` BIGINT NOT NULL,
       `Pos_Y` BIGINT NOT NULL,
-      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> web server
-    );
+      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> must be set on web server side
+	);
+	
+	the parameter failurePart is a JSON object with the elements Id_Machine, Id_Failure, Pos_X and Pos_Y
 */
 function reportFailurePart(failurePart){
 
 	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
 
-	sendTrackingMessage(failurePart)
+	let currentTimestamp = new Date().toJSON().slice(0, 19).replace('T', ' ')
+	let jsonData = {
+		Id_Machine: failurePart.Id_Machine,
+		Id_Failure: failurePart.Id_Failure,
+		Pos_X: failurePart.Pos_X,
+		Pos_Y: failurePart.Pos_Y,
+		Rated_at: currentTimestamp
+	}
+
+	sendTrackingMessage(jsonData)
 		.then(()=> console.log("Send message to kafka"))
 		.catch(e => console.log("Failed to send message to kafka due to the error", e))
 }
@@ -115,11 +127,26 @@ function reportFailurePart(failurePart){
 //returns failure parts statistic from database (no cache)
 /*
 * shift: 1= Frühschicht, 2= Spätschicht, 3= Nachtschicht
+* date format: 2020-12-10 -> yyyy-mm-dd
 *
-* return [{failure_id:4, count:20}, ...]
+* return [{id_failure:4, count:20, date:'2020-12-10', shift=1}, ...]
 */
-function getFailurePartStatistic(date, shift){
+function getFailurePartStatistic(shift, date){
+	console.log(`Reading failure part statistic data from database`)
 
+	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift == ? AND Date == '?'", [shift, date])
+	let data = result.fetchAll()
+
+	if(data) {
+		let jsonData = JSON.stringify(data.map(_shiftStatisticAsJson))
+
+		console.log(`Got failures part statistic data from database ${jsonData}`)
+
+		return jsonData
+	}
+	else {
+		return `No failure part statistic data found`
+	}
 }
 
 //#endregion
@@ -142,6 +169,16 @@ function _failureAsJson(data){
 		id: data[0],
 		name: data[1],
 		description: data[2]
+	}
+}
+
+//extracts sql result into json format
+function _shiftStatisticAsJson(data){
+	return {
+		id_failure: data[0],
+		count: data[1],
+		date: data[2],
+		shift: data[3]
 	}
 }
 

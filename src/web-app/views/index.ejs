@@ -1,0 +1,245 @@
+<!DOCTYPE htmls>
+	<html>
+	  <head>
+		<!--Import Google Icon Font-->
+		<!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
+		<!--Import materialize.css-->
+		<link type="text/css" rel="stylesheet" href="/css/materialize.min.css"  media="screen,projection"/>
+	
+		<!--Let browser know website is optimized for mobile-->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	  </head>
+	
+	  <body>
+	
+		<a class="waves-effect waves-light btn">statistics3</a>
+	
+		<div id="maschinetablediv"></div>
+	
+	  <!-- Modal Structure -->
+	  <div id="modalpusherror" class="modal modal-fixed-footer">
+		<div id="modalpusherrorcontent" class="modal-content">
+	
+		</div>
+		<div class="modal-footer">
+		  <a href="#!" onclick="pushError(false)" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+		  <a href="#!" disabled id="submitbutton" onclick="pushError(true)" class="modal-close waves-effect waves-green btn-flat">Submit</a>
+	
+        </div>
+        
+        <%= maschinen[0].hi %>
+
+ 
+        
+      </div>
+      
+    
+	
+		<!--JavaScript at end of body for optimized loading-->
+		<script type="text/javascript" src="/js/materialize.min.js"></script>
+		<script>
+	
+	var maschineArray = [
+		{ 
+			id: 1,
+			name: 'Maschine 1',
+			max_x: 8,
+			max_y: 10
+		},
+		{
+			id: 1,
+			name: 'Maschine 2',
+			max_x: 3,
+			max_y: 5
+		},
+		{
+			id: 1,
+			name: 'Maschine 3',
+			max_x: 2,
+			max_y: 1
+		},
+    ];
+    
+
+	var errorArray = [
+	  {
+		id: 1,
+		name: 'Zylinder defekt',
+		description: 'da isch ebbes ganz un gar ned guad'
+	  },
+	  {
+		id: 2,
+		name: 'keine Ausgabe',
+		description: 'die Maschine gibt nichts aus'
+	  },
+	  {
+		id: 3,
+		name: 'Musterfehler 3',
+		description: 'xxxxxxxxxxxxxx'
+	  },
+	  {
+		id: 4,
+		name: 'Musterfehler 4',
+		description: 'xxxxxxxxxxxxxxx'
+	  }
+	];
+	
+	// function for pushing Error to middleware
+	function pushErrorModal(id, maschineName, x, y) {
+		console.log('ID: ' + id);
+		console.log('Name: '+ maschineName);
+		console.log('P('+x+','+y+')');
+		localStorage.setItem('maschineid', id);
+		localStorage.setItem('maschinename', maschineName);
+		localStorage.setItem('x', x);
+		localStorage.setItem('y', y);
+	
+		var elems = document.getElementById('modalpusherror');
+		var instance = M.Modal.init(elems);
+		
+		var modal = document.getElementById('modalpusherrorcontent');
+		var modalHTML = '<h4>Push a Error </h4>'
+					  + '<h6>for ' + localStorage.getItem('maschinename') + ' at'
+					  + ' P(' + localStorage.getItem('x') + ',' + localStorage.getItem('y') + ')</h6>'
+					  + '<form action="#">';
+		
+		for (i=0; i < errorArray.length; i++) {
+		  modalHTML = modalHTML
+					 + '<p>'
+					  + '<label>'
+						+ '<input type="radio" name="radiobutton" value="' + errorArray[i].id +'"/>'
+						+ '<span>' 
+						  + errorArray[i].name
+						  + '<br />'
+						  + 'description: ' + errorArray[i].description
+						+ '</span>'
+					 + '</label>'
+					+ '</p>';
+		}
+		modalHTML = modalHTML + '</form>';
+		
+	setTimeout(()=> {
+	
+	  var allRadios = document.getElementsByName('radiobutton');
+		var booRadio;
+		var x = 0;
+		var _this = this;
+		for(x = 0; x < allRadios.length; x++){
+	
+		  console.log('hi');
+		  allRadios[x].setAttribute( 'onClick', 'javascript: (localStorage.setItem("errorId", '+errorArray[x].id+'), document.getElementById("submitbutton").removeAttribute("disabled"))');
+	
+	}
+	
+	});
+	
+		modal.innerHTML = modalHTML;
+		instance.open();
+		
+	}
+	
+	function pushError(bool) {
+	  document.getElementById("submitbutton").setAttribute('disabled', true)
+	  if (bool) {
+	  var pushMaschineID = localStorage.getItem('maschineid');
+	  var pushErrorX = localStorage.getItem('x');
+	  var pushErrorY = localStorage.getItem('y');
+	  var pushErrorId = localStorage.getItem('errorId');
+	  //todo: call middleware function
+	
+	  //toaster notification
+	  var toastHTML = 'Error P('+ localStorage.getItem('x') + ',' + localStorage.getItem('y') + ') for ' + localStorage.getItem('maschinename') +' pushed.';
+	  M.toast({html: toastHTML});
+	  } else {
+		null;
+	  }
+	}
+	
+	//function for looping through Array of machines from Database
+	function loopMaschineArray(maschineArray) {
+		for (var c = 0; c < maschineArray.length; c++) {
+			var maschine = maschineArray[c];
+			addMachineTable(maschine.id, maschine.name, maschine.max_x, maschine.max_y);
+		   console.log(maschineArray[c]);
+		}
+	}
+	
+	//function for generating HTML table
+	function addMachineTable(id, name, max_x, max_y) {
+	  var tablediv = document.getElementById('maschinetablediv');
+	  tablediv.innerHTML = tablediv.innerHTML + '<h5>' + name + '</h5>';;
+	
+	  var table = document.createElement('TABLE');
+	  table.classList = 'highlight centered striped';
+	  table.border = '1';
+	
+	  var tableBody = document.createElement('TBODY');
+	  var w = table.appendChild(tableBody);
+	
+	  for (var i = 0; i < max_x; i++) {
+		var tr = document.createElement('TR');
+		var x = tableBody.appendChild(tr);
+	
+		for (var j = 0; j < max_y; j++) {
+		  var td = document.createElement('TD');
+		  td.width = '30';
+		  var xy = i + ',' + j;
+		  var params = id + ',' + "'" + name + "'" + ',' + xy;
+		  var y = td.appendChild(document.createTextNode('P('+xy+')'));
+		  y.parentElement.setAttribute( 'onClick', 'javascript: pushErrorModal('+params+');');
+		  var z = tr.appendChild(td);
+		}
+	  }
+	  tablediv.appendChild(table);
+	  tablediv.innerHTML = tablediv.innerHTML + '<br />'
+	}
+	
+	async function getMaschines() {
+	
+	}
+	
+	async function getErrors() {
+	
+	}
+	
+	async function getStatistic() {
+	
+	}
+	
+	//entry point
+	getMaschines();
+	getErrors();
+	loopMaschineArray(maschineArray);
+	
+		</script>
+		<style>
+	
+	/*Custom Table Styling*/
+			body {
+				padding: 20px;
+			}
+			table, th, td {
+				border-style: solid;
+			}
+			td {
+				cursor: pointer;
+			}
+			td:hover {
+				background-color: red;
+				color: white;
+			}
+	
+	/*Custom Button Styling*/
+			.btn {
+				background-color: grey !important;
+			}
+	
+			.btn:hover {
+				background-color: black;
+			}
+			.btn:active {
+				background-color: black;
+			}
+		</style>
+	  </body>
+	</html>
