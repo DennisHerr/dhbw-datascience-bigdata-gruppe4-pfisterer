@@ -43,11 +43,18 @@ data:
       PRIMARY KEY (`Id`)
     );
 
-      CREATE TABLE `faults` (
+    CREATE TABLE `faults` (
       `Id_Machine` BIGINT NOT NULL,
       `Id_Failure` BIGINT NOT NULL,
       `count` BIGINT NOT NULL,
       PRIMARY KEY (`Id_Machine`, `Id_Failure`)
+    );
+    CREATE TABLE `Shift_Statistics` (
+      `Id_Failure` BIGINT NOT NULL,
+      `Count` BIGINT NOT NULL,
+      `Date` DATE NOT NULL DEFAULT CURRENT_DATE,
+      `Shift` BIGINT NOT NULL,
+      PRIMARY KEY (`Id_Failure`)
     );
 
     INSERT INTO missions (mission, description, heading) VALUES ('sts-0', 'Esse sunt anim nulla nulla id. Mollit excepteur dolor duis mollit nisi proident ut reprehenderit excepteur nulla duis. Ea dolore aliqua Lorem aliquip exercitation labore. In aute duis nulla et deserunt exercitation. Excepteur in Lorem veniam est aliqua irure.\nAmet sit id enim sit ea non laboris consectetur. Adipisicing ex fugiat Lorem sint officia nostrud qui officia esse irure duis. Exercitation tempor Lorem ea ullamco pariatur occaecat nisi cillum esse. Eiusmod adipisicing non exercitation consequat.\nDuis labore enim Lorem duis elit officia non. Eiusmod dolor irure reprehenderit aliqua et non labore deserunt magna ad Lorem labore. In nulla adipisicing duis labore non labore proident officia labore aute consequat anim. Aute minim dolor dolor enim reprehenderit eu consequat ea ex mollit aliqua. Aliquip excepteur Lorem exercitation ut.\nLorem nulla ea aute consequat esse. Ad labore non dolore nulla pariatur aliqua aliqua consequat qui nisi consectetur pariatur ipsum. Sunt ut aliquip ut eu incididunt est nulla aliqua nostrud. Nostrud velit elit tempor quis occaecat sunt ullamco incididunt ipsum ipsum. Laborum in ipsum qui ex eu culpa aliqua incididunt in labore ipsum tempor magna. Elit nulla qui labore adipisicing duis. Laborum anim veniam quis mollit aliquip quis commodo anim eu.\nVeniam esse incididunt et nulla proident eu adipisicing laboris sit. Pariatur proident ut fugiat cillum excepteur elit sunt eiusmod eiusmod. In commodo irure consectetur sint ullamco. Eu ea sit ad aliqua anim laborum tempor esse eiusmod culpa ut tempor adipisicing sit. Ad cupidatat aliqua fugiat consequat quis voluptate incididunt amet aliquip pariatur sunt est ad reprehenderit. Sit tempor nisi magna esse deserunt deserunt anim non incididunt enim incididunt cupidatat ut. Deserunt cupidatat deserunt culpa aliqua.', 'Culpa adipisicing veniam non nisi.');
@@ -87,6 +94,7 @@ data:
     INSERT INTO Failures (Id, Name, Description) VALUES (4, 'Failure A', 'Hello Failure A');
     INSERT INTO Failures (Id, Name, Description) VALUES (5, 'Failure B', 'Hello Failure B');
     INSERT INTO Failures (Id, Name, Description) VALUES (6, 'Failure C', 'Hello Failure C');
+    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift) VALUES (1, 200, 1);
 
 ---
 apiVersion: apps/v1

@@ -144,10 +144,7 @@ app.set('view engine', 'ejs');
 
 function sendResponse(res, html, cachedResult) {
 
-	var maschineArray1 = [{hi: "hi"}];
-	var errorArray1 = [{hi: "hi"}]
 
-	res.render('index', {maschinen: maschineArray1, errors: errorArray1});
 }
 
 // -------------------------------------------------------
@@ -188,35 +185,16 @@ async function getPopular(maxCount) {
 
 // Return HTML for start page
 app.get("/", (req, res) => {
-	const topX = 10;
 
-	//getMachineFromDatabaseOrCache(1)
-	//getFailuresFromDatabaseOrCache()
-	//getMachinesFromDatabaseOrCache()
+	var maschineArray1 = [{hi: "hi"}];
+	var errorArray1 = [{hi: "hi"}]
 
-	Promise.all([getMissions(), getPopular(topX)]).then(values => {
-		const missions = values[0]
-		const popular = values[1]
+	//maschineArray1 =  getMachinesFromDatabaseOrCache();
 
-		const missionsHtml = missions.result
-			.map(m => `<a href='missions/${m}'>${m}</a>`)
-			.join(", ")
+	res.render('index', {maschinen: maschineArray1, errors: errorArray1});
 
-		const popularHtml = popular
-			.map(pop => `<li> <a href='missions/${pop.mission}'>${pop.mission}</a> (${pop.count} views) </li>`)
-			.join("\n")
-
-		const html = `
-			<h1>Top ${topX} Missions</h1>		
-			<p>
-				<ol style="margin-left: 2em;"> ${popularHtml} </ol> 
-			</p>
-			<h1>All Missions</h1>
-			<p> ${missionsHtml} </p>
-		`
-		sendResponse(res, html, missions.cached)
+	
 	})
-})
 
 // -------------------------------------------------------
 // Get a specific mission (from cache or DB)
