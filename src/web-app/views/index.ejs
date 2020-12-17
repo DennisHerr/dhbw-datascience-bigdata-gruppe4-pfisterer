@@ -24,41 +24,14 @@
 		<div class="modal-footer">
 		  <a href="#!" onclick="pushError(false)" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
 		  <a href="#!" disabled id="submitbutton" onclick="pushError(true)" class="modal-close waves-effect waves-green btn-flat">Submit</a>
-	
-        </div>
-        
-        <%= maschinen[0].hi %>
-
- 
-        
+        </div>     
       </div>
-      
     
-	
 		<!--JavaScript at end of body for optimized loading-->
 		<script type="text/javascript" src="/js/materialize.min.js"></script>
 		<script>
 	
-	var maschineArray = [
-		{ 
-			id: 1,
-			name: 'Maschine 1',
-			max_x: 8,
-			max_y: 10
-		},
-		{
-			id: 1,
-			name: 'Maschine 2',
-			max_x: 3,
-			max_y: 5
-		},
-		{
-			id: 1,
-			name: 'Maschine 3',
-			max_x: 2,
-			max_y: 1
-		},
-    ];
+	var maschineArray = <%- machinesData %>;
     
 
 	var errorArray = [

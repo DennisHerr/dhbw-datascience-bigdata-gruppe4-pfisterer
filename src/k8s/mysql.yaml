@@ -49,10 +49,11 @@ data:
       `count` BIGINT NOT NULL,
       PRIMARY KEY (`Id_Machine`, `Id_Failure`)
     );
+
     CREATE TABLE `Shift_Statistics` (
       `Id_Failure` BIGINT NOT NULL,
       `Count` BIGINT NOT NULL,
-      `Date` DATE NOT NULL DEFAULT CURRENT_DATE,
+      `Date` DATE,
       `Shift` BIGINT NOT NULL,
       PRIMARY KEY (`Id_Failure`)
     );

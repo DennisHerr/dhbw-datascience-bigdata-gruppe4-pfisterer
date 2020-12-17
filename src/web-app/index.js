@@ -143,8 +143,43 @@ app.use(express.static('materialize'));
 app.set('view engine', 'ejs');
 
 function sendResponse(res, html, cachedResult) {
-
-
+	res.send(`<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>Big Data Use-Case Demo</title>
+			<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css">
+			<script>
+				function fetchRandomMissions() {
+					const maxRepetitions = Math.floor(Math.random() * 200)
+					document.getElementById("out").innerText = "Fetching " + maxRepetitions + " random missions, see console output"
+					for(var i = 0; i < maxRepetitions; ++i) {
+						const missionId = Math.floor(Math.random() * ${numberOfMissions})
+						console.log("Fetching mission id " + missionId)
+						fetch("/missions/sts-" + missionId, {cache: 'no-cache'})
+					}
+				}
+			</script>
+		</head>
+		<body>
+			<h1>Big Data Use Case Demo</h1>
+			<p>
+				<a href="javascript: fetchRandomMissions();">Randomly fetch some missions</a>
+				<span id="out"></span>
+			</p>
+			${html}
+			<hr>
+			<h2>Information about the generated page</h4>
+			<ul>
+				<li>Server: ${os.hostname()}</li>
+				<li>Date: ${new Date()}</li>
+				<li>Using ${memcachedServers.length} memcached Servers: ${memcachedServers}</li>
+				<li>Cached result: ${cachedResult}</li>
+			</ul>
+		</body>
+	</html>
+	`)
 }
 
 // -------------------------------------------------------
@@ -186,15 +221,13 @@ async function getPopular(maxCount) {
 // Return HTML for start page
 app.get("/", (req, res) => {
 
-	var maschineArray1 = [{hi: "hi"}];
-	var errorArray1 = [{hi: "hi"}]
+	//promise is important -> otherwise the JSON data is may not available in the ejs template
+	Promise.all([getMachinesFromDatabaseOrCache(), getFailuresFromDatabaseOrCache()]).then(data => {
+		//it is important to use <%- %> int he ejs template otherwise the unicode of the JSON data is printed
+		res.render("index", { machinesData: data[0], failuresData: data[1] }); 
+	});
 
-	//maschineArray1 =  getMachinesFromDatabaseOrCache();
-
-	res.render('index', {maschinen: maschineArray1, errors: errorArray1});
-
-	
-	})
+})
 
 // -------------------------------------------------------
 // Get a specific mission (from cache or DB)
@@ -281,8 +314,6 @@ app.get("/missions/:mission", (req, res) => {
 	})
 }); 
 
-
-
 // -------------------------------------------------------
 // Main method
 // -------------------------------------------------------
@@ -291,3 +322,180 @@ app.listen(options.port, function () {
 	console.log("Node app is running at http://localhost:" + options.port)
 	console.log(JSON.stringify({ x: 5, y: 6 }));
 });
+
+//returns all machines from the database/cache in JSON format
+async function getMachinesFromDatabaseOrCache(){
+	const key = 'machines'
+	let cachedData = await getFromCache(key)
+
+	if(cachedData) {
+		console.log(`Found machines in cache ${cachedData}`)
+		return cachedData
+	}
+	else {
+		console.log(`Machines not found in cache, reading data from database`)
+
+		let result = await executeQuery("SELECT * FROM Machines", [])
+		let data = result.fetchAll()
+
+		if(data) {
+			let jsonData = JSON.stringify(data.map(_machineAsJson))
+
+			console.log(`Got machines data from database ${jsonData}, storing data in cache`)
+			if(memcached){
+				await memcached.set(key, jsonData, cacheTimeSecs)
+			}
+
+			return jsonData
+		}
+		else {
+			return `No machines data found`
+		}
+	}
+}
+
+//returns a specific machine from the database/cache in JSON format
+async function getMachineFromDatabaseOrCache(id){
+	const key = "machine_" + id
+	let cachedData = await getFromCache(key)
+
+	if(cachedData){
+		console.log(`Found machine in cache ${cachedData}`)
+		return cachedData
+	}
+	else {
+		console.log(`Machine with id ${id} not found in cache, reading data from database`)
+
+		let result = await executeQuery("SELECT * FROM Machines WHERE Id = ?",[id])
+		let data = result.fetchOne();
+
+		if(data){
+			let jsonData = JSON.stringify(_machineAsJson(data));
+
+			console.log(`Got machine data from database ${jsonData}, storing data in cache`)
+			if(memcached){
+				await memcached.set(key, jsonData, cacheTimeSecs)
+			}
+
+			return jsonData
+		} 
+		else {
+			throw `No data for machine with id ${id} found`
+		}
+	}
+}
+
+//returns all failures from the database/cache in JSON format
+async function getFailuresFromDatabaseOrCache(){
+	const key = 'failures'
+	let cachedData = await getFromCache(key)
+
+	if(cachedData) {
+		console.log(`Found failures in cache ${cachedData}`)
+		return cachedData
+	}
+	else {
+		console.log(`Failures not found in cache, reading data from database`)
+
+		let result = await executeQuery("SELECT * FROM Failures", [])
+		let data = result.fetchAll()
+
+		if(data) {
+			let jsonData = JSON.stringify(data.map(_failureAsJson))
+
+			console.log(`Got failures data from database ${jsonData}, storing data in cache`)
+			if(memcached){
+				await memcached.set(key, jsonData, cacheTimeSecs)
+			}
+
+			return jsonData
+		}
+		else {
+			return `No failures data found`
+		}
+	}
+}
+
+//sends a tracking message to kafka to process the reported failure part
+/*
+   `Fault_Parts` (
+      `Id_Machine` BIGINT NOT NULL,
+      `Id_Failure` BIGINT NOT NULL,
+      `Pos_X` BIGINT NOT NULL,
+      `Pos_Y` BIGINT NOT NULL,
+      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> must be set on web server side
+	);
+	
+	the parameter failurePart is a JSON object with the elements Id_Machine, Id_Failure, Pos_X and Pos_Y
+*/
+function reportFailurePart(failurePart){
+
+	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
+
+	let currentTimestamp = new Date().toJSON().slice(0, 19).replace('T', ' ')
+	let jsonData = {
+		Id_Machine: failurePart.Id_Machine,
+		Id_Failure: failurePart.Id_Failure,
+		Pos_X: failurePart.Pos_X,
+		Pos_Y: failurePart.Pos_Y,
+		Rated_at: currentTimestamp
+	}
+
+	sendTrackingMessage(jsonData)
+		.then(()=> console.log("Send message to kafka"))
+		.catch(e => console.log("Failed to send message to kafka due to the error", e))
+}
+
+//returns failure parts statistic from database (no cache)
+/*
+* shift: 1= Frühschicht, 2= Spätschicht, 3= Nachtschicht
+* date format: 2020-12-10 -> yyyy-mm-dd
+*
+* return [{id_failure:4, count:20, date:'2020-12-10', shift=1}, ...]
+*/
+async function getFailurePartStatistic(shift, date){
+	console.log(`Reading failure part statistic data from database`)
+
+	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift == ? AND Date == '?'", [shift, date])
+	let data = result.fetchAll()
+
+	if(data) {
+		let jsonData = JSON.stringify(data.map(_shiftStatisticAsJson))
+
+		console.log(`Got failures part statistic data from database ${jsonData}`)
+
+		return jsonData
+	}
+	else {
+		return `No failure part statistic data found`
+	}
+}
+
+//extracts sql result into json format
+function _machineAsJson(data){
+	return {
+		id: data[0],
+		name: data[1],
+		max_x: data[2],
+		max_y: data[3]
+	}
+}
+
+//extracts sql result into json format
+function _failureAsJson(data){
+	return {
+		id: data[0],
+		name: data[1],
+		description: data[2]
+	}
+}
+
+//extracts sql result into json format
+function _shiftStatisticAsJson(data){
+	return {
+		id_failure: data[0],
+		count: data[1],
+		date: data[2],
+		shift: data[3]
+	}
+}
