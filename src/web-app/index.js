@@ -456,7 +456,7 @@ function reportFailurePart(failurePart){
 async function getFailurePartStatistic(shift, date){
 	console.log(`Reading failure part statistic data from database`)
 
-	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift == ? AND Date == '?'", [shift, date])
+	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift = ? AND Date = '?'", [shift, date])
 	let data = result.fetchAll()
 
 	if(data) {
