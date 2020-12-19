@@ -54,6 +54,11 @@ async function executeQuery(query, data) {
 	return await session.sql(query, data).bind(data).execute()
 }
 
+async function executeQuery(query) {
+	let session = await mysqlx.getSession(dbConfig);
+	return await session.sql(query).execute()
+}
+
 // -------------------------------------------------------
 // Memache Configuration
 // -------------------------------------------------------
@@ -156,34 +161,26 @@ app.get("/", (req, res) => {
 app.post("/", (req, res) => {
 
 	console.log("#POST REQUEST RECEIVED");
+	console.log(req.body);
+
+	//send tracking message to Kafa
+	reportFailurePart(req.body);
+
+	//TODO -> should we send a response to the client? -> callback in client is already available
 })
 
-app.get("/missions/:mission", (req, res) => {
-	let mission = req.params["mission"]
+// Receive http post with selected statistic parameters in JSON
+app.post("/Statistic", (req, res) => {
 
-	console.log(mission)
+	console.log("#POST REQUEST RECEIVED: url /Statistic");
+	console.log(req.body);
 
-	// Send the tracking message to Kafka
-	sendTrackingMessage({
-		machine: 1,
-		failure: parseInt(mission.split('-')[1]),
-		posx: 5,
-		posy: 10,
-		timestamp: Math.floor(new Date() / 1000)
-	}
-	).then(() => console.log("Sent to kafka"))
-		.catch(e => console.log("Error sending to kafka", e))
-
-	// Send reply to browser
-	getMission(mission).then(data => {
-		sendResponse(res, `<h1>${data.mission}</h1><p>${data.heading}</p>` +
-			data.description.split("\n").map(p => `<p>${p}</p>`).join("\n"),
-			data.cached
-		)
-	}).catch(err => {
-		sendResponse(res, `<h1>Error</h1><p>${err}</p>`, false)
-	})
-}); 
+	//promise is important -> otherwise the JSON data is may not available
+	Promise.all([getFailurePartStatistic(req.body.Shift, req.body.Date)]).then(data => {
+		//send statistic in JSON format to client
+		res.send(data[0]);
+	});
+})
 
 // -------------------------------------------------------
 // Main method
@@ -225,37 +222,6 @@ async function getMachinesFromDatabaseOrCache(){
 		}
 		else {
 			return `No machines data found`
-		}
-	}
-}
-
-//returns a specific machine from the database/cache in JSON format
-async function getMachineFromDatabaseOrCache(id){
-	const key = "machine_" + id
-	let cachedData = await getFromCache(key)
-
-	if(cachedData){
-		console.log(`Found machine in cache ${cachedData}`)
-		return cachedData
-	}
-	else {
-		console.log(`Machine with id ${id} not found in cache, reading data from database`)
-
-		let result = await executeQuery("SELECT * FROM Machines WHERE Id = ?",[id])
-		let data = result.fetchOne();
-
-		if(data){
-			let jsonData = JSON.stringify(_machineAsJson(data));
-
-			console.log(`Got machine data from database ${jsonData}, storing data in cache`)
-			if(memcached){
-				await memcached.set(key, jsonData, cacheTimeSecs)
-			}
-
-			return jsonData
-		} 
-		else {
-			throw `No data for machine with id ${id} found`
 		}
 	}
 }
@@ -330,7 +296,7 @@ function reportFailurePart(failurePart){
 async function getFailurePartStatistic(shift, date){
 	console.log(`Reading failure part statistic data from database`)
 
-	let result = await executeQuery("SELECT * FROM Shift_Statistics WHERE Shift = ? AND Date = '?'", [shift, date])
+	let result = await executeQuery(`SELECT * FROM Shift_Statistics WHERE Shift = ${shift} AND Date = '${date}'`)
 	let data = result.fetchAll()
 
 	if(data) {
@@ -341,7 +307,8 @@ async function getFailurePartStatistic(shift, date){
 		return jsonData
 	}
 	else {
-		return `No failure part statistic data found`
+		consolse.log(`No failure part statistic data found`)
+		return []
 	}
 }
 

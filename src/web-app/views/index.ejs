@@ -9,7 +9,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	</head>
 	<body>
-		<a class="waves-effect waves-light btn">statistics3</a>
+		<div class="waves-effect waves-light btn" onclick="requestStatistic()">statistics3</div>
 		<div id="maschinetablediv"></div>
 		<!-- Modal Structure -->
 		<div id="modalpusherror" class="modal modal-fixed-footer">
@@ -95,7 +95,7 @@
 
 				request.open("POST", "", true);
 				request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-				request.send(JSON.stringify({ Machine_Id: pushMaschineID, Failure_Id: pushErrorId, Pos_X: pushErrorX, Pos_Y: pushErrorY }));
+				request.send(JSON.stringify({ Id_Machine: pushMaschineID, Id_Failure: pushErrorId, Pos_X: pushErrorX, Pos_Y: pushErrorY }));
 
 				//toaster notification
 				var toastHTML = 'Error P('+ localStorage.getItem('x') + ',' + localStorage.getItem('y') + ') for ' + localStorage.getItem('maschinename') +' pushed.';
@@ -103,6 +103,23 @@
 				} else {
 				null;
 				}
+			}
+
+			function requestStatistic()
+			{
+				//TODO -> use parameters instead of dummy data
+
+				//send data via http post
+				var request = new XMLHttpRequest();
+				request.onload = function()
+				{
+					//handle server response here
+					//TODO -> setup the chart 
+				}
+
+				request.open("POST", "/Statistic/", true);
+				request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				request.send(JSON.stringify({ Shift: 3, Date: "2020-12-19" }));
 			}
 
 			//function for looping through Array of machines from Database
