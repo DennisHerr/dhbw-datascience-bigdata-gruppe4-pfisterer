@@ -27,112 +27,121 @@
 
 			// function for pushing Error to middleware
 			function pushErrorModal(id, maschineName, x, y) {
-			console.log('ID: ' + id);
-			console.log('Name: '+ maschineName);
-			console.log('P('+x+','+y+')');
-			localStorage.setItem('maschineid', id);
-			localStorage.setItem('maschinename', maschineName);
-			localStorage.setItem('x', x);
-			localStorage.setItem('y', y);
+				console.log('ID: ' + id);
+				console.log('Name: '+ maschineName);
+				console.log('P('+x+','+y+')');
+				localStorage.setItem('maschineid', id);
+				localStorage.setItem('maschinename', maschineName);
+				localStorage.setItem('x', x);
+				localStorage.setItem('y', y);
 
-			var elems = document.getElementById('modalpusherror');
-			var instance = M.Modal.init(elems);
+				var elems = document.getElementById('modalpusherror');
+				var instance = M.Modal.init(elems);
 
-			var modal = document.getElementById('modalpusherrorcontent');
-			var modalHTML = '<h4>Push a Error </h4>'
-					+ '<h6>for ' + localStorage.getItem('maschinename') + ' at'
-					+ ' P(' + localStorage.getItem('x') + ',' + localStorage.getItem('y') + ')</h6>'
-					+ '<form action="#">';
+				var modal = document.getElementById('modalpusherrorcontent');
+				var modalHTML = '<h4>Push a Error </h4>'
+						+ '<h6>for ' + localStorage.getItem('maschinename') + ' at'
+						+ ' P(' + localStorage.getItem('x') + ',' + localStorage.getItem('y') + ')</h6>'
+						+ '<form action="#">';
 
-			for (i=0; i < errorArray.length; i++) {
-			modalHTML = modalHTML
-					+ '<p>'
-					+ '<label>'
-					+ '<input type="radio" name="radiobutton" value="' + errorArray[i].id +'"/>'
-					+ '<span>' 
-						+ errorArray[i].name
-						+ '<br />'
-						+ 'description: ' + errorArray[i].description
-					+ '</span>'
-					+ '</label>'
-				+ '</p>';
-			}
-			modalHTML = modalHTML + '</form>';
+				for (i=0; i < errorArray.length; i++) {
+				modalHTML = modalHTML
+						+ '<p>'
+						+ '<label>'
+						+ '<input type="radio" name="radiobutton" value="' + errorArray[i].id +'"/>'
+						+ '<span>' 
+							+ errorArray[i].name
+							+ '<br />'
+							+ 'description: ' + errorArray[i].description
+						+ '</span>'
+						+ '</label>'
+					+ '</p>';
+				}
+				modalHTML = modalHTML + '</form>';
 
-			setTimeout(()=> {
+				setTimeout(()=> {
 
-			var allRadios = document.getElementsByName('radiobutton');
-			var booRadio;
-			var x = 0;
-			var _this = this;
-			for(x = 0; x < allRadios.length; x++){
+				var allRadios = document.getElementsByName('radiobutton');
+				var booRadio;
+				var x = 0;
+				var _this = this;
+				for(x = 0; x < allRadios.length; x++){
 
-			console.log('hi');
-			allRadios[x].setAttribute( 'onClick', 'javascript: (localStorage.setItem("errorId", '+errorArray[x].id+'), document.getElementById("submitbutton").removeAttribute("disabled"))');
+				console.log('hi');
+				allRadios[x].setAttribute( 'onClick', 'javascript: (localStorage.setItem("errorId", '+errorArray[x].id+'), document.getElementById("submitbutton").removeAttribute("disabled"))');
 
-			}
+				}
 
-			});
+				});
 
-			modal.innerHTML = modalHTML;
-			instance.open();
-
+				modal.innerHTML = modalHTML;
+				instance.open();
 			}
 
 			function pushError(bool) {
-			document.getElementById("submitbutton").setAttribute('disabled', true)
-			if (bool) {
-			var pushMaschineID = localStorage.getItem('maschineid');
-			var pushErrorX = localStorage.getItem('x');
-			var pushErrorY = localStorage.getItem('y');
-			var pushErrorId = localStorage.getItem('errorId');
-			//todo: call middleware function
+				document.getElementById("submitbutton").setAttribute('disabled', true)
+				if (bool) {
+				var pushMaschineID = localStorage.getItem('maschineid');
+				var pushErrorX = localStorage.getItem('x');
+				var pushErrorY = localStorage.getItem('y');
+				var pushErrorId = localStorage.getItem('errorId');
 
-			//toaster notification
-			var toastHTML = 'Error P('+ localStorage.getItem('x') + ',' + localStorage.getItem('y') + ') for ' + localStorage.getItem('maschinename') +' pushed.';
-			M.toast({html: toastHTML});
-			} else {
-			null;
-			}
+				//send data via http post
+				var request = new XMLHttpRequest();
+				request.onload = function()
+				{
+					//handle server response here
+				}
+
+				request.open("POST", "", true);
+				request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				request.send(JSON.stringify({ Machine_Id: pushMaschineID, Failure_Id: pushErrorId, Pos_X: pushErrorX, Pos_Y: pushErrorY }));
+
+				//toaster notification
+				var toastHTML = 'Error P('+ localStorage.getItem('x') + ',' + localStorage.getItem('y') + ') for ' + localStorage.getItem('maschinename') +' pushed.';
+				M.toast({html: toastHTML});
+				} else {
+				null;
+				}
 			}
 
 			//function for looping through Array of machines from Database
 			function loopMaschineArray(maschineArray) {
-			for (var c = 0; c < maschineArray.length; c++) {
-			var maschine = maschineArray[c];
-			addMachineTable(maschine.id, maschine.name, maschine.max_x, maschine.max_y);
-			console.log(maschineArray[c]);
-			}
+				for (var c = 0; c < maschineArray.length; c++) {
+				var maschine = maschineArray[c];
+				addMachineTable(maschine.id, maschine.name, maschine.max_x, maschine.max_y);
+				console.log(maschineArray[c]);
+				}
 			}
 
 			//function for generating HTML table
 			function addMachineTable(id, name, max_x, max_y) {
-			var tablediv = document.getElementById('maschinetablediv');
-			tablediv.innerHTML = tablediv.innerHTML + '<h5>' + name + '</h5>';;
+				var tablediv = document.getElementById('maschinetablediv');
+				tablediv.innerHTML = tablediv.innerHTML + '<h5>' + name + '</h5>';;
 
-			var table = document.createElement('TABLE');
-			table.classList = 'highlight centered striped';
-			table.border = '1';
+				var table = document.createElement('TABLE');
+				table.classList = 'highlight centered striped';
+				table.border = '1';
 
-			var tableBody = document.createElement('TBODY');
-			var w = table.appendChild(tableBody);
+				var tableBody = document.createElement('TBODY');
+				var w = table.appendChild(tableBody);
 
-			for (var i = 0; i < max_x; i++) {
-			var tr = document.createElement('TR');
-			var x = tableBody.appendChild(tr);
+				for (var i = 0; i < max_x; i++) {
+				var tr = document.createElement('TR');
+				var x = tableBody.appendChild(tr);
 
-			for (var j = 0; j < max_y; j++) {
-			var td = document.createElement('TD');
-			td.width = '30';
-			var xy = i + ',' + j;
-			var params = id + ',' + "'" + name + "'" + ',' + xy;
-			var y = td.appendChild(document.createTextNode('P('+xy+')'));
-			y.parentElement.setAttribute( 'onClick', 'javascript: pushErrorModal('+params+');');
-			var z = tr.appendChild(td);
-			}
-			}
-			tablediv.appendChild(table);
-			tablediv.innerHTML = tablediv.innerHTML + '<br />'
+				for (var j = 0; j < max_y; j++) {
+				var td = document.createElement('TD');
+				td.width = '30';
+				var xy = i + ',' + j;
+				var params = id + ',' + "'" + name + "'" + ',' + xy;
+				var y = td.appendChild(document.createTextNode('P('+xy+')'));
+				y.parentElement.setAttribute( 'onClick', 'javascript: pushErrorModal('+params+');');
+				var z = tr.appendChild(td);
+				}
+				}
+				tablediv.appendChild(table);
+				tablediv.innerHTML = tablediv.innerHTML + '<br />'
 			}
 
 			async function getMaschines() {

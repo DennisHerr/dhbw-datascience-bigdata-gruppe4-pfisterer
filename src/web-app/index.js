@@ -137,16 +137,25 @@ async function sendTrackingMessage(data) {
 // ------------------------------------------------------
 
 app.use(express.static('materialize'));
+app.use(express.json());
 app.set('view engine', 'ejs');
 
 // Return HTML for start page
 app.get("/", (req, res) => {
+
+	console.log("#GET REQUEST RECEIVED");
 
 	//promise is important -> otherwise the JSON data is may not available in the ejs template
 	Promise.all([getMachinesFromDatabaseOrCache(), getFailuresFromDatabaseOrCache()]).then(data => {
 		//it is important to use <%- %> int he ejs template otherwise the unicode of the JSON data is printed
 		res.render("index", { machinesData: data[0], failuresData: data[1] }); 
 	});
+})
+
+// Receive http post with selected failure in JSON
+app.post("/", (req, res) => {
+
+	console.log("#POST REQUEST RECEIVED");
 })
 
 app.get("/missions/:mission", (req, res) => {
