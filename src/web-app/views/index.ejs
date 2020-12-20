@@ -40,7 +40,7 @@
     </div>
 
     <div id="modalshowstatistics" class="modal modal-fixed-footer">
-
+		<div id="barchart_material" style="width: 900px; height: 500px;"></div>
 
       <div class="modal-footer">
         <a href="#!" class="modal-close waves-effect waves-red btn-flat">Close</a>
@@ -63,7 +63,9 @@
   </div>
 
     <!--JavaScript at end of body for optimized loading-->
-    <script type="text/javascript" src="/js/materialize.min.js"></script>
+	<script type="text/javascript" src="/js/materialize.min.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
     <script>
 
       var maschineArray = <%- machinesData %>;
@@ -148,11 +150,18 @@ function getStatistics() {
      alert('Enter Shift AND Date!')
    } else {
 
-    requestStatistic(shift, date);
+	var errorStatisticsArray = [
+    {id_failure:4, count:20, date:'2020-12-10', shift:1},
+    {id_failure:3, count:40, date:'2020-12-10', shift:1},
+    {id_failure:2, count:25, date:'2020-12-10', shift:1},
+    {id_failure:1, count:2, date:'2020-12-10', shift:1}
+  ];
 
-    var elems = document.getElementById('modalshowstatistics');
-    var instance = M.Modal.init(elems);
-    instance.open();
+   requestStatistic(shift, date);
+
+   console.log(localStorage.getItem('statisticArray'));
+ 
+
    }
 }
 
@@ -225,18 +234,56 @@ function addMachineTable(id, name, max_x, max_y) {
 
 function requestStatistic(shift, date)
 			{
-				//TODO -> use parameters instead of dummy data
-
 				//send data via http post
 				var request = new XMLHttpRequest();
 				request.onload = function()
 				{
-          console.log('request onload');
+		  console.log('request onload');
+		  console.log(request.response);
 					//handle server response here
 					//TODO -> setup the chart 
+
+		var errorStatisticsArray = [];
+		Promise.all(errorStatisticsArray = JSON.parse(request.response)).then(data =>{
+               return;		});
+
+
+
+		var chartArray = [['Errortype', 'Count']];
+
+		for(i=0; i<errorStatisticsArray.length; i++) {
+			chartArray[errorStatisticsArray[i].id_failure] = ['' + errorStatisticsArray[i].id_failure++, errorStatisticsArray[i].count] 
+		}      
+
+		console.log(chartArray);
+
+
+		google.charts.load('current', {'packages':['bar']});
+			google.charts.setOnLoadCallback(drawChart);
+
+			function drawChart() {
+			var data = google.visualization.arrayToDataTable(chartArray);
+
+			var options = {
+				chart: {
+				title: 'Shift ' + errorStatisticsArray[0].shift + ' Maschine Errors',
+				subtitle: 'grouped by error',
+				},
+				bars: 'horizontal' // Required for Material Bar Charts.
+			};
+
+			var chart = new google.charts.Bar(document.getElementById('barchart_material'));
+
+			chart.draw(data, google.charts.Bar.convertOptions(options));
+			}
+
+
+		var elems = document.getElementById('modalshowstatistics');
+		var instance = M.Modal.init(elems);
+		instance.open();
 				}
 
-				request.open("POST", "/Statistic/", true);
+				request.open("POST", "/Statistic/", false);
 				request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 				request.send(JSON.stringify({ Shift: shift, Date: date }));
 			}

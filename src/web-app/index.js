@@ -300,7 +300,7 @@ async function getFailurePartStatistic(shift, date){
 	let data = result.fetchAll()
 
 	if(data) {
-		let jsonData = JSON.stringify(data.map(_shiftStatisticAsJson))
+		let jsonData = JSON.stringify(data.map(_shiftStatisticAsJson));
 
 		console.log(`Got failures part statistic data from database ${jsonData}`)
 
