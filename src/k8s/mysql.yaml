@@ -30,18 +30,12 @@ data:
       PRIMARY KEY (`Id`)
     );
 
-    CREATE TABLE `faults` (
-      `Id_Machine` BIGINT NOT NULL,
-      `Id_Failure` BIGINT NOT NULL,
-      `count` BIGINT NOT NULL,
-      PRIMARY KEY (`Id_Machine`, `Id_Failure`)
-    );
-
     CREATE TABLE `Shift_Statistics` (
       `Id_Failure` BIGINT NOT NULL,
       `Count` BIGINT NOT NULL,
       `Date` DATE,
-      `Shift` BIGINT NOT NULL
+      `Shift` BIGINT NOT NULL,
+      PRIMARY KEY (`Id_Failure`, `Date`, `Shift`)
     );
 
     INSERT INTO Machines (Id, Name, Max_X, Max_Y) VALUES (1, 'Machine A', 5, 5);
@@ -50,10 +44,10 @@ data:
     INSERT INTO Failures (Id, Name, Description) VALUES (4, 'Failure A', 'Hello Failure A');
     INSERT INTO Failures (Id, Name, Description) VALUES (5, 'Failure B', 'Hello Failure B');
     INSERT INTO Failures (Id, Name, Description) VALUES (6, 'Failure C', 'Hello Failure C');
-    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (1, 200, 1, '2020-12-31');
-    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (1, 200, 3, '2020-12-31');
-    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (2, 200, 3, '2020-12-31');
-    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (3, 200, 3, '2020-12-31');
+    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (1, 30, 1, '2020-12-31');
+    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (1, 22, 3, '2020-12-31');
+    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (2, 32, 3, '2020-12-31');
+    INSERT INTO Shift_Statistics (Id_Failure, Count, Shift, Date) VALUES (3, 22, 3, '2020-12-31');
 
 ---
 apiVersion: apps/v1

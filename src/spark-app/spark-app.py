@@ -3,6 +3,8 @@ from datetime import datetime
 import mysqlx
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
+from pyspark.sql.functions import udf
+from pyspark.sql.types import IntegerType
 from pyspark.sql.types import (IntegerType, StringType, StructType,
                                TimestampType)
 
@@ -14,6 +16,22 @@ slidingDuration = '1 minute'
 
 partsPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/parts"
 checkPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/checkpoint/"
+
+#-----------------help funciton
+def getShift(date):
+    print(date)
+    print(date.hour)
+    if (date.hour >= 0 and date.hour < 8 ):
+        return 1
+    elif (date.hour < 16):
+        return 2
+    elif (date.hour < 24):
+        return 3
+    else:
+        return 0 
+
+from pyspark.sql.types import IntegerType
+udf_to_shift = udf(lambda z: getShift(z), IntegerType())
 
 # Example Part 1
 # Create a spark session
@@ -85,11 +103,26 @@ ratingMsgVal = ratingMessages.select(
 print('Schreibe in HDFS')
 
 #initDF = jasonmsg.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
-
-
+testi = ratingMsgVal.withColumn("shift", udf_to_shift(col("parsed_timestamp")))
+"""query = testi.writeStream.format("console").start()
+import time
+time.sleep(10) # sleep 10 seconds
+query.stop()
+ """
 # Example Part 4
 # Compute most popular slides
-ratingGrouped = ratingMsgVal.groupBy(
+
+ratingGrouped = testi.groupBy(
+    window(
+        column("parsed_timestamp"),
+        windowDuration,
+        slidingDuration
+    ),
+    column("shift"),
+    column("failure")
+).count().withColumnRenamed('count', 'cnt')
+
+""" ratingGrouped = ratingMsgVal.groupBy(
     window(
         column("parsed_timestamp"),
         windowDuration,
@@ -97,7 +130,7 @@ ratingGrouped = ratingMsgVal.groupBy(
     ),
     column("machine"),
     column("failure")
-).count().withColumnRenamed('count', 'cnt')
+).count().withColumnRenamed('count', 'cnt') """
 
 print('ist gruppiert')
 
@@ -127,11 +160,10 @@ def saveToDatabase(batchDataframe, batchId):
         for row in iterator:
             print('REIHE', str(row))
             # Run upsert (insert or update existing)
-            sql = session.sql("INSERT INTO faults "
-                              "(Id_Machine, Id_Failure, count) VALUES (?, ?,?) "
-                              "ON DUPLICATE KEY UPDATE count=?")
-            #print(row.machine, row.failure, row.count, row.count)
-            sql.bind(row.machine, row.failure, row.cnt, row.cnt).execute()
+            sql = session.sql("INSERT INTO Shift_Statistics "
+                              "(Shift, Id_Failure, Count, Date) VALUES (?,?,?,?) "
+                              "ON DUPLICATE KEY UPDATE Count=?")
+            sql.bind(row.shift, row.failure, row.cnt, datetime.today().strftime('%Y-%m-%d'), row.cnt).execute()
 
         session.close()
 

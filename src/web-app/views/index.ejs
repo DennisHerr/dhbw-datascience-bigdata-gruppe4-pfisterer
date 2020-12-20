@@ -168,10 +168,10 @@ function getStatistics() {
 function pushError(bool) {
   document.getElementById("submitbutton").setAttribute('disabled', true)
   if (bool) {
-  var pushMaschineID = localStorage.getItem('maschineid');
-  var pushErrorX = localStorage.getItem('x');
-  var pushErrorY = localStorage.getItem('y');
-  var pushErrorId = localStorage.getItem('errorId');
+  var pushMaschineID = parseInt(localStorage.getItem('maschineid'));
+  var pushErrorX = parseInt(localStorage.getItem('x'));
+  var pushErrorY = parseInt(localStorage.getItem('y'));
+  var pushErrorId = parseInt(localStorage.getItem('errorId'));
 
   //send data via http post
   var request = new XMLHttpRequest();
@@ -252,7 +252,7 @@ function requestStatistic(shift, date)
 		var chartArray = [['Errortype', 'Count']];
 
 		for(i=0; i<errorStatisticsArray.length; i++) {
-			chartArray[errorStatisticsArray[i].id_failure] = ['' + errorStatisticsArray[i].id_failure++, errorStatisticsArray[i].count] 
+			chartArray.push(['' + errorStatisticsArray[i].id_failure, errorStatisticsArray[i].count])
 		}      
 
 		console.log(chartArray);
