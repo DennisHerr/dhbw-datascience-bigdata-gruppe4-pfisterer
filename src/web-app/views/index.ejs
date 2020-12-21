@@ -41,8 +41,9 @@
     </div>
 
     <div id="modalshowstatistics" class="modal modal-fixed-footer">
-		<div id="barchart_material" style="width: 900px; height: 500px;"></div>
-
+		<div id="modalgetstatisticscontent" class="modal-content">
+		  <div id="barchart_material" style="width: 900px; height: 500px;"></div>
+	  </div>
       <div class="modal-footer">
         <a href="#!" class="modal-close waves-effect waves-red btn-flat">Close</a>
   
@@ -91,7 +92,7 @@ function pushErrorModal(id, maschineName, x, y) {
                   + '<h6>for ' + localStorage.getItem('maschinename') + ' at'
                   + ' P(' + localStorage.getItem('x') + ',' + localStorage.getItem('y') + ')</h6>'
                   + '<form action="#">'
-                    +'<h6>Choose a errotype..</h6>';
+                    +'<h6>Choose an errortype..</h6>';
     
     for (i=0; i < errorArray.length; i++) {
       modalHTML = modalHTML
@@ -151,16 +152,9 @@ function getStatistics() {
      alert('Enter Shift AND Date!')
    } else {
 
-	var errorStatisticsArray = [
-    {id_failure:4, count:20, date:'2020-12-10', shift:1},
-    {id_failure:3, count:40, date:'2020-12-10', shift:1},
-    {id_failure:2, count:25, date:'2020-12-10', shift:1},
-    {id_failure:1, count:2, date:'2020-12-10', shift:1}
-  ];
+	var errorStatisticsArray = [];
 
    requestStatistic(shift, date);
-
-   console.log(localStorage.getItem('statisticArray'));
  
 
    }
@@ -248,8 +242,13 @@ function requestStatistic(shift, date)
 		Promise.all(errorStatisticsArray = JSON.parse(request.response)).then(data =>{
                return;		});
 
-
-
+		if(errorStatisticsArray.length==0) {
+			var bardiv = document.getElementById('barchart_material');
+			bardiv.innerHTML = '<h4>No matching error entries found <br />for shift: ' + shift + ' on date: ' + String(date) + '</h4>'
+								+ '<br />'
+								+ '<h6>Start a new try:</h6>'
+								+'<a href="#!" class="modal-close waves-effect waves-light btn" onclick="statisticsModal()">statistics</a>';
+		}
 		var chartArray = [['Errortype', 'Count']];
 
 		for(i=0; i<errorStatisticsArray.length; i++) {
@@ -267,7 +266,7 @@ function requestStatistic(shift, date)
 
 			var options = {
 				chart: {
-				title: 'Shift ' + errorStatisticsArray[0].shift + ' Maschine Errors',
+				title:  'maschine part errors for shift: ' + shift + ' on date: ' + String(date),
 				subtitle: 'grouped by error',
 				},
 				bars: 'horizontal' // Required for Material Bar Charts.
@@ -275,18 +274,19 @@ function requestStatistic(shift, date)
 
 			var chart = new google.charts.Bar(document.getElementById('barchart_material'));
 
-			chart.draw(data, google.charts.Bar.convertOptions(options));
+			errorStatisticsArray.length !== 0 ? chart.draw(data, google.charts.Bar.convertOptions(options)) : null;
 			}
 
 
 		var elems = document.getElementById('modalshowstatistics');
 		var instance = M.Modal.init(elems);
 		instance.open();
-				}
+				} 
 
 				request.open("POST", "/Statistic/", false);
 				request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
 				request.send(JSON.stringify({ Shift: shift, Date: date }));
+				
 			}
 
 //entry point
