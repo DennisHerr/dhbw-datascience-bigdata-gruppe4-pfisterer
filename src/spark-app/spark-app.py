@@ -133,7 +133,6 @@ def saveToDatabase(batchDataframe, batchId):
         session.sql("USE popular").execute()
 
         for row in iterator:
-            print('REIHE', str(row))
             # Run upsert (insert or update existing)
             sql = session.sql("INSERT INTO Shift_Statistics "
                               "(Shift, Id_Failure, Count, Date) VALUES (?,?,?,?) "
