@@ -1,3 +1,4 @@
+
 from datetime import datetime
 
 import mysqlx
@@ -103,21 +104,19 @@ ratingMsgVal = ratingMessages.select(
 print('Schreibe in HDFS')
 
 #initDF = jasonmsg.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
-testi = ratingMsgVal.withColumn("shift", udf_to_shift(col("parsed_timestamp")))
-"""query = testi.writeStream.format("console").start()
-import time
-time.sleep(10) # sleep 10 seconds
-query.stop()
- """
+ratingMsgShift = ratingMsgVal.withColumn("shift", udf_to_shift(col("parsed_timestamp")))
+ratingMsgDate = ratingMsgShift.withColumn("date", (col("parsed_timestamp").cast("date")))
+
 # Example Part 4
 # Compute most popular slides
 
-ratingGrouped = testi.groupBy(
+ratingGrouped = ratingMsgDate.groupBy(
     window(
         column("parsed_timestamp"),
         windowDuration,
         slidingDuration
     ),
+    column("date"),
     column("shift"),
     column("failure")
 ).count().withColumnRenamed('count', 'cnt')
@@ -163,7 +162,7 @@ def saveToDatabase(batchDataframe, batchId):
             sql = session.sql("INSERT INTO Shift_Statistics "
                               "(Shift, Id_Failure, Count, Date) VALUES (?,?,?,?) "
                               "ON DUPLICATE KEY UPDATE Count=?")
-            sql.bind(row.shift, row.failure, row.cnt, datetime.today().strftime('%Y-%m-%d'), row.cnt).execute()
+            sql.bind(row.shift, row.failure, row.cnt, row.date.strftime('%Y-%m-%d'), row.cnt).execute()
 
         session.close()
 
