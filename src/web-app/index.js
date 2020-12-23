@@ -164,7 +164,7 @@ app.post("/", (req, res) => {
 	console.log(req.body);
 
 	//send tracking message to Kafa
-	reportFailurePart(req.body);
+	reportFailurePart(req.body, Math.floor(new Date() / 1000));
 
 	//TODO -> should we send a response to the client? -> callback in client is already available
 })
@@ -181,6 +181,60 @@ app.post("/Statistic", (req, res) => {
 		res.send(data[0]);
 	});
 })
+
+app.post("/Random", (req, res) => {
+
+	console.log("#POST REQUEST RECEIVED: url /Random");
+	console.log(req.body);
+	
+	var days = req.body.Days;
+	if(days <= 0)
+	return;
+	
+	Promise.all([getMachinesFromDatabaseOrCache(), getFailuresFromDatabaseOrCache()]).then(data => {
+		doSmth(days, data);
+	});
+})
+	
+async function doSmth(days, data){
+	let machines = data[0];
+	let failures = data[1];
+	
+	//create random data for the i last days
+	for(var i = days; i > 0; i--){
+	
+		//get i days before today
+		var date = new Date();
+		date.setDate(date.getDate()-i);
+	
+		for(var j = 0; j < 3; j++){
+			var machine = machines[j];
+		
+			console.log(machine);
+		
+			for(var k = 0; k < 5; k++){
+				var failure = failures[k];
+			
+				console.log(failure);
+			
+				//calculate random number to be transmit the failure (1 - 100)
+				var cnt = 5;
+				for(var l = 0; l < cnt; l++)
+				{
+					console.log("failure id" + failure.id)
+					let jsonData = {
+						Id_Machine: parseInt(machine.id),
+						Id_Failure: 1,
+						Pos_X: 1,
+						Pos_Y: 1
+					}
+					reportFailurePart(jsonData, Math.floor(date / 1000));
+				}
+			
+			}
+		}
+	}
+}
 
 // -------------------------------------------------------
 // Main method
@@ -269,7 +323,7 @@ async function getFailuresFromDatabaseOrCache(){
 	
 	the parameter failurePart is a JSON object with the elements Id_Machine, Id_Failure, Pos_X and Pos_Y
 */
-function reportFailurePart(failurePart){
+function reportFailurePart(failurePart, date){
 
 	console.log(`Send tracking message with failure part ${failurePart} to kafka`)
 
@@ -278,7 +332,7 @@ function reportFailurePart(failurePart){
 		failure: failurePart.Id_Failure,
 		posx: failurePart.Pos_X,
 		posy: failurePart.Pos_Y,
-		timestamp: Math.floor(new Date() / 1000)
+		timestamp: date
 	}
 
 	sendTrackingMessage(jsonData)

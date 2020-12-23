@@ -12,6 +12,7 @@
   <body>
     
     <a class="waves-effect waves-light btn" onclick="statisticsModal()">statistics</a>
+    <a class="waves-effect waves-light btn" onclick="createRandomData(1)">create random data for the last day</a>
     <div id="modalgetstatistics" class="modal modal-fixed-footer">
       <form action="#">
       <div id="modalgetstatisticscontent" class="modal-content">
@@ -158,6 +159,18 @@ function getStatistics() {
  
 
    }
+}
+
+function createRandomData(days){
+  //send data via http post
+  var request = new XMLHttpRequest();
+  request.onload = function()
+  {
+  //handle server response here
+  }
+  request.open("POST", "/Random/", true);
+  request.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  request.send(JSON.stringify({ Days: days }));
 }
 
 //function push error to nodejs webserver
