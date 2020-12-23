@@ -192,49 +192,9 @@ app.post("/Random", (req, res) => {
 	return;
 	
 	Promise.all([getMachinesFromDatabaseOrCache(), getFailuresFromDatabaseOrCache()]).then(data => {
-		doSmth(days, data);
+		createRandomData(days, data);
 	});
 })
-	
-async function doSmth(days, data){
-	let machines = data[0];
-	let failures = data[1];
-	
-	//create random data for the i last days
-	for(var i = days; i > 0; i--){
-	
-		//get i days before today
-		var date = new Date();
-		date.setDate(date.getDate()-i);
-	
-		for(var j = 0; j < 3; j++){
-			var machine = machines[j];
-		
-			console.log(machine);
-		
-			for(var k = 0; k < 5; k++){
-				var failure = failures[k];
-			
-				console.log(failure);
-			
-				//calculate random number to be transmit the failure (1 - 100)
-				var cnt = 5;
-				for(var l = 0; l < cnt; l++)
-				{
-					console.log("failure id" + failure.id)
-					let jsonData = {
-						Id_Machine: parseInt(machine.id),
-						Id_Failure: 1,
-						Pos_X: 1,
-						Pos_Y: 1
-					}
-					reportFailurePart(jsonData, Math.floor(date / 1000));
-				}
-			
-			}
-		}
-	}
-}
 
 // -------------------------------------------------------
 // Main method
@@ -242,7 +202,6 @@ async function doSmth(days, data){
 
 app.listen(options.port, function () {
 	console.log("Node app is running at http://localhost:" + options.port)
-	console.log(JSON.stringify({ x: 5, y: 6 }));
 });
 
 // -------------------------------------------------------
@@ -366,6 +325,46 @@ async function getFailurePartStatistic(shift, date){
 	}
 }
 
+//creates a random number of failures for the last days (including today) and transmits them to kafka
+async function createRandomData(days, data){
+	//create random data for the last i days
+	for(var i = days-1; i >= 0; i--){
+	
+		//get i days before today
+		var date = new Date();
+		date.setDate(date.getDate()-i);
+		
+		//get random number of failures to be set -> 50-80
+		var failureCnt = _getRandomInt(30) + 50;
+
+		//parse database data
+		var machinesData = JSON.parse(data[0]);
+		var failureData = JSON.parse(data[1]);
+
+		for(var j = 0; j < failureCnt; j++)
+		{
+			//set random values 
+			var machineIndex = _getRandomInt(machinesData.length-1);
+			var failureIndex = _getRandomInt(failureData.length-1);
+			var xpos = _getRandomInt(machinesData[machineIndex].max_x);
+			var ypos = _getRandomInt(machinesData[machineIndex].max_y);
+			var hours = _getRandomInt(24);
+			date.setHours(hours);
+
+			var jsonData = {
+				Id_Machine: machinesData[machineIndex].id,
+				Id_Failure: failureData[failureIndex].id,
+				Pos_X: xpos,
+				Pos_Y: ypos
+			}
+
+			//report random failure
+			console.log("Send random failure data " + JSON.stringify(jsonData));
+			reportFailurePart(jsonData, Math.floor(date / 1000));
+		}
+	}
+}
+
 //extracts sql result into json format
 function _machineAsJson(data){
 	return {
@@ -393,4 +392,9 @@ function _shiftStatisticAsJson(data){
 		date: data[2],
 		shift: data[3]
 	}
+}
+
+//returns a random integer
+function _getRandomInt(max) {
+	return Math.floor(Math.random() * Math.floor(max));
 }
