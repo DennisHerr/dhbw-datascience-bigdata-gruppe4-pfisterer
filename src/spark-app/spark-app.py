@@ -15,13 +15,13 @@ dbSchema = 'popular'
 windowDuration = '5 minutes'
 slidingDuration = '1 minute'
 
+#Path for saving the raw data on HDFS
 partsPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/parts"
+#Path for saving the chackpoints during streaming
 checkPath = "hdfs://my-hadoop-cluster-hadoop-hdfs-nn:9000/checkpoint/"
 
 #-----------------help funciton
 def getShift(date):
-    print(date)
-    print(date.hour)
     if (date.hour >= 0 and date.hour < 8 ):
         return 1
     elif (date.hour < 16):
@@ -32,19 +32,18 @@ def getShift(date):
         return 0 
 
 from pyspark.sql.types import IntegerType
+#create UDF to get a shift from a datetime
 udf_to_shift = udf(lambda z: getShift(z), IntegerType())
 
-# Example Part 1
+
 # Create a spark session
 spark = SparkSession.builder \
     .appName("Structured Streaming").getOrCreate()
 
 # Set log level
 spark.sparkContext.setLogLevel('WARN')
-print('#######################################################################################')
-print('#############neuer lauf', datetime.now())
 
-# Example Part 2
+
 # Read messages from Kafka
 kafkaMessages = spark \
     .readStream \
@@ -56,17 +55,6 @@ kafkaMessages = spark \
     .load()
 
 
-
-# sends a tracking message to kafka to process the reported failure part
-
-"""    `Fault_Parts` (
-      `Id_Machine` BIGINT NOT NULL,
-      `Id_Failure` BIGINT NOT NULL,
-      `Pos_X` BIGINT NOT NULL,
-      `Pos_Y` BIGINT NOT NULL,
-      `Rated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -> web server
-    ); """
-
 # Define schema of rating data
 ratingMessageSchema = StructType() \
     .add("machine", IntegerType()) \
@@ -75,10 +63,7 @@ ratingMessageSchema = StructType() \
     .add("posy", IntegerType()) \
     .add("timestamp", IntegerType())
 
-print('Struct angelegt')
 
-
-# Example Part 3
 # Convert value: binary -> JSON -> fields + parsed timestamp
 ratingMessages = kafkaMessages.select(
     # Extract 'value' from Kafka message (i.e., the tracking data)
@@ -101,15 +86,17 @@ ratingMsgVal = ratingMessages.select(
     .withColumnRenamed('json.posx', 'posx') \
     .withColumnRenamed('json.posy', 'posy') \
     .withWatermark("parsed_timestamp", windowDuration)
-print('Schreibe in HDFS')
 
-#initDF = jasonmsg.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
+print('Write raw data into HDFS')
+ratingMsgVal.writeStream.format("csv").outputMode('Append').option("path", partsPath).option("checkpointLocation", checkPath).start()
+
+#Add column wirh corresponding shift to timestamp
 ratingMsgShift = ratingMsgVal.withColumn("shift", udf_to_shift(col("parsed_timestamp")))
+#Add column with corresponding date from timestamp
 ratingMsgDate = ratingMsgShift.withColumn("date", (col("parsed_timestamp").cast("date")))
 
-# Example Part 4
-# Compute most popular slides
 
+#Grouping the failures over Date and shift for the evaluation
 ratingGrouped = ratingMsgDate.groupBy(
     window(
         column("parsed_timestamp"),
@@ -121,21 +108,10 @@ ratingGrouped = ratingMsgDate.groupBy(
     column("failure")
 ).count().withColumnRenamed('count', 'cnt')
 
-""" ratingGrouped = ratingMsgVal.groupBy(
-    window(
-        column("parsed_timestamp"),
-        windowDuration,
-        slidingDuration
-    ),
-    column("machine"),
-    column("failure")
-).count().withColumnRenamed('count', 'cnt') """
 
-print('ist gruppiert')
 
-# Example Part 5
+
 # Start running the query; print running counts to the console
-
 
 consoleDump = ratingGrouped \
     .writeStream \
@@ -145,9 +121,9 @@ consoleDump = ratingGrouped \
     .option("truncate", "false") \
     .start()
 
-# Example Part 6
 
 
+#Write the processed statistics to the database
 def saveToDatabase(batchDataframe, batchId):
     # Define function to save a dataframe to mysql
 
@@ -169,11 +145,7 @@ def saveToDatabase(batchDataframe, batchId):
     # Perform batch UPSERTS per data partition
     batchDataframe.foreachPartition(save_to_db)
 
-# Example Part 7
-
-
-print('streame jetzt')
-
+#Stream and write into database
 dbInsertStream = ratingGrouped.writeStream \
     .trigger(processingTime=slidingDuration) \
     .outputMode("update") \
