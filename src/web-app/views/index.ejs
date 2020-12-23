@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!--Import Google Icon Font-->
-    <!--<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">-->
     <!--Import materialize.css-->
 	<link type="text/css" rel="stylesheet" href="/css/materialize.min.css"  media="screen,projection"/>
 	<title>maschine parts error detection</title>
@@ -18,9 +16,8 @@
       <form action="#">
       <div id="modalgetstatisticscontent" class="modal-content">
         <h4>View Statisics</h4>
-        
-      
-  <h6>Choose and a date..</h6>
+            
+  		<h6>Choose a date..</h6>
         <input type="text" id="datepicker" class="datepicker">
 <br />
         <h6>..and a shift</h6>
@@ -70,10 +67,11 @@
 
     <script>
 
-      var maschineArray = <%- machinesData %>;
-			var errorArray = <%- failuresData %>;
+//save data from ejs (res.render("index", { machinesData: data[0], failuresData: data[1] });)
+var maschineArray = <%- machinesData %>;
+var errorArray = <%- failuresData %>;
 
-// function for pushing Error to middleware
+//function for pushing Error to middleware
 function pushErrorModal(id, maschineName, x, y) {
   
     console.log('ID: ' + id);
@@ -88,7 +86,7 @@ function pushErrorModal(id, maschineName, x, y) {
     var instance = M.Modal.init(elems);
     
     var modal = document.getElementById('modalpusherrorcontent');
-    var modalHTML = '<h4>Push a Error </h4>'
+    var modalHTML = '<h4>Push an error </h4>'
                   + '<h6>for ' + localStorage.getItem('maschinename') + ' at'
                   + ' P(' + localStorage.getItem('x') + ',' + localStorage.getItem('y') + ')</h6>'
                   + '<form action="#">'
@@ -108,7 +106,8 @@ function pushErrorModal(id, maschineName, x, y) {
                 + '</p>';
     }
     modalHTML = modalHTML + '</form>';
-    
+
+// onclick for radiobuttons to activate the submit button
 setTimeout(()=> {
 
   var allRadios = document.getElementsByName('radiobutton');
@@ -117,7 +116,6 @@ setTimeout(()=> {
     var _this = this;
     for(x = 0; x < allRadios.length; x++){
 
-      console.log('hi');
       allRadios[x].setAttribute( 'onClick', 'javascript: (localStorage.setItem("errorId", '+errorArray[x].id+'), document.getElementById("submitbutton").removeAttribute("disabled"))');
 
 }
@@ -129,6 +127,7 @@ setTimeout(()=> {
     
 }
 
+//function open the modal to view the statistic chart
 function statisticsModal() {
 
   var elems = document.getElementById('datepicker');
@@ -144,6 +143,7 @@ function statisticsModal() {
   instance.open();
 }
 
+//function get stastic data from nodejs webserver and draw chart in requestStatistic
 function getStatistics() {
    var shift = document.getElementById('shiftselect').value;
    var date = document.getElementById('datepicker').value;
@@ -160,9 +160,12 @@ function getStatistics() {
    }
 }
 
+//function push error to nodejs webserver
 function pushError(bool) {
   document.getElementById("submitbutton").setAttribute('disabled', true)
   if (bool) {
+
+  //parse back to int
   var pushMaschineID = parseInt(localStorage.getItem('maschineid'));
   var pushErrorX = parseInt(localStorage.getItem('x'));
   var pushErrorY = parseInt(localStorage.getItem('y'));
@@ -203,7 +206,7 @@ function addMachineTable(id, name, max_x, max_y) {
   tablediv.innerHTML = tablediv.innerHTML + '<h5>' + name + '</h5>';;
 
   var table = document.createElement('TABLE');
-  table.classList = 'highlight centered striped';
+  table.classList = 'highlight centered striped background';
   table.border = '1';
 
   var tableBody = document.createElement('TBODY');
@@ -227,6 +230,7 @@ function addMachineTable(id, name, max_x, max_y) {
   tablediv.innerHTML = tablediv.innerHTML + '<br />'
 }
 
+//function for request and drawing chart
 function requestStatistic(shift, date)
 			{
 				//send data via http post
@@ -257,7 +261,7 @@ function requestStatistic(shift, date)
 
 		console.log(chartArray);
 
-
+        //google chart framework
 		google.charts.load('current', {'packages':['bar']});
 			google.charts.setOnLoadCallback(drawChart);
 
@@ -291,8 +295,8 @@ function requestStatistic(shift, date)
 
 //entry point
 loopMaschineArray(maschineArray);
-
-    </script>
+	</script>
+	
     <style>
 
 /*Custom Table Styling*/
@@ -309,6 +313,11 @@ loopMaschineArray(maschineArray);
             background-color: red;
             color: white;
         }
+
+		.background {
+			background-image: url("/img/leiterplatte.jpeg");
+			background-size: cover;
+		}
 
 /*Custom Button Styling*/
         .btn {
